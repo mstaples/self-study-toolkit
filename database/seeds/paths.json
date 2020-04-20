@@ -1,0 +1,502 @@
+{
+    "path1": {
+        "ready": true,
+        "path_category": "Interactions",
+        "path_title": "Circle of trust",
+        "path_difficulty": "basic",
+        "path_thesis": "Trust is vital to the success of every interaction, relationship, team, and organization. Understanding how trust is created, maintained, and lost is a skill to be learned and mastered through continual practice.",
+        "tags": ["relationships", "teamwork", "introspection", "community"],
+        "prompts": {
+            "1": {
+                "repeatable": false,
+                "prompt_title": "Evolution of Trust",
+                "prompt_segments": {
+                    "1": {
+                        "type": "section",
+                        "title": "Evolution of Trust",
+                        "text": "Read and play through the Evolution of Trust.",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "emoji": true,
+                                "text": "Done"
+                            },
+                            "value": "segment.2",
+                            "options": {}
+                        }
+                    },
+                    "2": {
+                        "type": "section",
+                        "title": "Reflection",
+                        "text": "After you’ve had time to explore the concepts in the Evolution of Trust game, indicate some things you noticed.",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "emoji": true,
+                                "text": "Ready"
+                            },
+                            "value": "segment.3",
+                            "options": {}
+                        }
+                    },
+                    "3": {
+                        "type": "section",
+                        "title": "Let's do it",
+                        "text": "What action does the game use to indicate a positive trust interaction?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "radio_buttons",
+                            "options": {
+                                "Cheat": false,
+                                "Cooperate": true,
+                                "Conspire": false,
+                                "Charm": false,
+                                "Converse": false
+                            },
+                            "text": {},
+                            "value": ""
+                        }
+                    },
+                    "4": {
+                        "type": "section",
+                        "title": "Typical",
+                        "text": "What are the five interaction style archetypes the game uses?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "checkboxes",
+                            "options": {
+                                "Copycat": true,
+                                "Grudger": true,
+                                "Always Cheat": true,
+                                "Always Cooperate": true,
+                                "Detective": true,
+                                "Cowboy": false,
+                                "Friendly": false,
+                                "Trickster": false,
+                                "Never Copy": false,
+                                "Tactician": false
+                            },
+                            "text": {},
+                            "value": ""
+                        }
+                    },
+                    "5": {
+                        "type": "section",
+                        "title": "First impressions",
+                        "text": "What interaction style archetype does this model indicate will be most successful if every interaction is between unknown individuals?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "radio_buttons",
+                            "options": {
+                                "Copycat": false,
+                                "Grudger": false,
+                                "Always Cheat": true,
+                                "Always Cooperate": false,
+                                "Detective": false
+                            },
+                            "text": {},
+                            "value": ""
+                        }
+                    },
+                    "6": {
+                        "type": "section",
+                        "title": "Sidekicks and Minions",
+                        "text": "What interaction style archetype does this model indicate most facilitates the Always Cheat style?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "radio_buttons",
+                            "options": {
+                                "Copycat": false,
+                                "Grudger": false,
+                                "Always Cheat": false,
+                                "Always Cooperate": true,
+                                "Detective": false
+                            },
+                            "text": {},
+                            "value": ""
+                        }
+                    },
+                    "7": {
+                        "type": "section",
+                        "title": "Getting to know you",
+                        "text": "What interaction style archetype does this model indicate will be most successful when individuals interact repeatedly?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "radio_buttons",
+                            "options": {
+                                "Copycat": true,
+                                "Grudger": false,
+                                "Always Cheat": false,
+                                "Always Cooperate": false,
+                                "Detective": false
+                            },
+                            "text": {},
+                            "value": ""
+                        }
+                    }
+                }
+            },
+            "2": {
+                "repeatable": false,
+                "prompt_title": "Benefit of the doubt",
+                "prompt_segments": {
+                    "1": {
+                        "type": "section",
+                        "title": "First impressions",
+                        "text": "How well do you remember your first play through the Evolution of Trust? If you play through again and remember which style of hat signified which interaction archetype, you could maximize your “score” by always cheating the Always Cheat and Always Cooperate opponents.",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "emoji": true,
+                                "text": "I remember"
+                            },
+                            "value": "segment.2",
+                            "options": {}
+                        }
+                    },
+                    "2": {
+                        "type": "section",
+                        "title": "Benefit of the doubt",
+                        "text": "Now that you 'know' them, there’s no question of whether or not to give them the benefit of the doubt. You already know what they'll do.",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "emoji": true,
+                                "text": "Seems like a safe assumption"
+                            },
+                            "value": "complete",
+                            "options": {}
+                        }
+                    },
+                    "3": {
+                        "type": "section",
+                        "title": "Learning is good",
+                        "text": "The model in the Evolution of Trust demonstrates how Always Cooperates facilitates the trust destroying behavior of Always Cheats. Remembering and learning from others' past behaviors is an important part of having trustworthy judgement, as is intentionally giving people the benefit of the doubt when attempting to build trust. In the coming week, be intentionally mindful of when you give and when you withhold benefit of the doubt when you interact with people.",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "emoji": true,
+                                "text": "I will"
+                            },
+                            "value": "complete",
+                            "options": {}
+                        }
+                    }
+                }
+            },
+            "3": {
+                "repeatable": true,
+                "prompt_title": "Reflecting on trust",
+                "prompt_segments": {
+                    "1": {
+                        "type": "section",
+                        "title": "Give benefit?",
+                        "text": "Thinking back on the last few days, did you ever notice that you were about to give someone the benefit of the doubt?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "radio_buttons",
+                            "options": {
+                                "Yes": "Yes",
+                                "No": "Not this time"
+                            },
+                            "text": {},
+                            "value": ""
+                        }
+                    },
+                    "2": {
+                        "type": "section",
+                        "title": "Give doubt?",
+                        "text": "Thinking back on the last few days, did you ever notice that you were about to withhold benefit of the doubt from someone?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "radio_buttons",
+                            "options": {
+                                "Yes": "Yes",
+                                "No": "Not this time"
+                            },
+                            "text": {},
+                            "value": ""
+                        }
+                    },
+                    "3": {
+                        "type": "section",
+                        "title": "Give intentionally",
+                        "text": "In the coming days, be mindful when interacting with people to try and notice whether or not you're giving them the benefit of the doubt.",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Will do"
+                            },
+                            "value": "complete",
+                            "options": {}
+                        }
+                    }
+                }
+            },
+            "4": {
+                "repeatable": true,
+                "prompt_title": "Introspecting on trust ",
+                "prompt_segments": {
+                    "1": {
+                        "type": "section",
+                        "title": "How did I do?",
+                        "text": "Thinking back on the last few days, did you notice when you fulfilled commitments to people without prompting?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "radio_buttons",
+                            "options": {
+                                "Yes": "Yes",
+                                "No": "Not this time"
+                            },
+                            "text": {},
+                            "value": ""
+                        }
+                    },
+                    "2": {
+                        "type": "section",
+                        "title": "How were my judgements?",
+                        "text": "Thinking back on the last few days, did you notice how the people you invest in treat others?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "radio_buttons",
+                            "options": {
+                                "Yes": "Yes",
+                                "No": "Not this time"
+                            },
+                            "text": {},
+                            "value": ""
+                        }
+                    },
+                    "3": {
+                        "type": "section",
+                        "title": "Give intentionally",
+                        "text": "In the coming days, be mindful when you strengthen your relationships by following through on commitments without prompting, and take note of how the people you invest in treat their relationships with others.",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Will do"
+                            },
+                            "value": "complete",
+                            "options": {}
+                        }
+                    }
+                }
+            },
+            "5": {
+                "repeatable": false,
+                "prompt_title": "Elements of trust",
+                "prompt_segments": {
+                    "1": {
+                        "type": "section",
+                        "title": "Mental model",
+                        "text": "Based on the simplified model for learning about communities of trust in Evolution of Trust, what are some key elements for creating trust?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "checkboxes",
+                            "options": {
+                                "Time": true,
+                                "Repeated interactions": true,
+                                "Giving benefit of the doubt": true,
+                                "Learning from past behavior": true,
+                                "Reevaluating judgements": true
+                            },
+                            "value": "complete",
+                            "text": {}
+                        }
+                    }
+                }
+            }
+        },
+        "sampling_questions": {
+            "0": {
+                "question": "",
+                "answers": {
+
+                }
+            }
+        }
+    },
+    "path2": {
+        "ready": false,
+        "path_category": "Habits",
+        "path_title": "Hometown Bias",
+        "path_difficulty": "basic",
+        "path_thesis": "Getting to know bias as a burden of nostalgia helps us expose its nuance and accept its permanent presence in our lives.",
+        "tags": ["words", "bias", "introspection"],
+        "prompts": {
+            "1": {
+                "repeatable": false,
+                "prompt_title": "Evolution of Trust",
+                "prompt_segments": {
+                    "1": {
+                        "type": "section",
+                        "title": "Evolution of Trust",
+                        "text": "Read and play through the Evolution of Trust.",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "emoji": true,
+                                "text": "Done"
+                            },
+                            "value": "segment.2",
+                            "options": {}
+                        }
+                    },
+                    "2": {
+                        "type": "section",
+                        "title": "Reflection",
+                        "text": "After you’ve had time to explore the concepts in the Evolution of Trust game, indicate some things you noticed.",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "emoji": true,
+                                "text": "Ready"
+                            },
+                            "value": "segment.3"
+                        }
+                    },
+                    "3": {
+                        "type": "section",
+                        "title": "Let's do it",
+                        "text": "What action does the game use to indicate a positive trust interaction?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "radio_buttons",
+                            "options": {
+                                "Cheat": false,
+                                "Cooperate": true,
+                                "Conspire": false,
+                                "Charm": false,
+                                "Converse": false
+                            }
+                        }
+                    },
+                    "4": {
+                        "type": "section",
+                        "title": "Typical",
+                        "text": "What are the five interaction style archetypes the game uses?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "checkboxes",
+                            "options": {
+                                "Copycat": true,
+                                "Grudger": true,
+                                "Always Cheat": true,
+                                "Always Cooperate": true,
+                                "Detective": true,
+                                "Cowboy": false,
+                                "Friendly": false,
+                                "Trickster": false,
+                                "Never Copy": false,
+                                "Tactician": false
+                            }
+                        }
+                    },
+                    "5": {
+                        "type": "section",
+                        "title": "First impressions",
+                        "text": "What interaction style archetype does this model indicate will be most successful if every interaction is between unknown individuals?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "radio_buttons",
+                            "options": {
+                                "Copycat": false,
+                                "Grudger": false,
+                                "Always Cheat": true,
+                                "Always Cooperate": false,
+                                "Detective": false
+                            }
+                        }
+                    },
+                    "6": {
+                        "type": "section",
+                        "title": "Sidekicks and Minions",
+                        "text": "What interaction style archetype does this model indicate most facilitates the Always Cheat style?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "radio_buttons",
+                            "options": {
+                                "Copycat": false,
+                                "Grudger": false,
+                                "Always Cheat": false,
+                                "Always Cooperate": true,
+                                "Detective": false
+                            }
+                        }
+                    },
+                    "7": {
+                        "type": "section",
+                        "title": "Getting to know you",
+                        "text": "What interaction style archetype does this model indicate will be most successful when individuals interact repeatedly?",
+                        "imageUrl": "",
+                        "url": "https://ncase.me/trust",
+                        "accessory": {
+                            "type": "radio_buttons",
+                            "options": {
+                                "Copycat": true,
+                                "Grudger": false,
+                                "Always Cheat": false,
+                                "Always Cooperate": false,
+                                "Detective": false
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "path3": {
+        "ready": false,
+        "path_category": "Habits",
+        "path_title": "Stupendous Badass",
+        "path_difficulty": "basic",
+        "path_thesis": "The human body is amazing and noticing the ways one works where others are challenged broadens perspective in important ways.",
+        "tags": ["perception", "privilege", "body"],
+        "prompts": {
+            "1": {
+
+            }
+        }
+    }
+}
