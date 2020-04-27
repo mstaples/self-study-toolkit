@@ -1,27 +1,27 @@
 <div id="nav">
 <ul>
     @if(Auth::check())
-    <li @if(\Request::is('curriculum'))
+    <li @if($nav == 'paths')
             class="current"
         @endif>
         <a href="{{ url('/curriculum') }}">Paths</a>
     </li>
-    <li @if(\Request::is('curriculum/prompts/'.$pathId ?? ''))
+        <li @if($nav == 'prompts')
         class="current"
         @endif>
         <a href="{{ url('/curriculum/prompts/'.$pathId ?? '') }}">Prompts</a>
     </li>
-    <li @if(\Request::is('curriculum/segments/'.$promptId ?? ''))
+        <li @if($nav == 'segments')
         class="current"
         @endif>
-        <a href="{{ url('curriculum/segments/'.$promptId ?? '') }}">Segments</a>
+        <a href="{{ url('curriculum/prompt/'.$promptId ?? '') }}">Segments</a>
     </li>
-    <li @if(\Request::is('curriculum/questions/'.$pathId ?? ''))
+        <li @if($nav == 'questions')
         class="current"
         @endif>
         <a href="{{ url('curriculum/questions/'.$pathId ?? '') }}">Questions</a>
     </li>
-    <li @if(\Request::is('curriculum/editors/'.$pathId ?? ''))
+        <li @if($nav == 'editors')
         class="current"
         @endif>
         <a href="{{ url('curriculum/editors/'.$pathId ?? '') }}">Editors</a>

@@ -4,10 +4,12 @@ namespace App\Objects;
 
 use App\Traits\PathTrait;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PromptPath extends Model
 {
     use PathTrait;
+    use SoftDeletes;
 
     protected $fillable = [ 'state', 'path_difficulty', 'path_category', 'path_title', 'steps', 'tags', 'repeatable', 'path_thesis', 'created_by' ];
     //
@@ -53,6 +55,18 @@ class PromptPath extends Model
     public function hasTag($tag)
     {
         return in_array($tag, json_decode($this->tags, true));
+    }
+
+    public function hasAccess(User $user)
+    {
+        if ($user == $this->created_by) return true;
+        $find = $this->editors()->where([
+            'user_id' => $user->id
+        ])->first();
+
+        if ($find) return true;
+
+        return false;
     }
 
     public function getSteps()

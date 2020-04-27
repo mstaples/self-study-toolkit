@@ -30,31 +30,18 @@
             {{ Form::label('prompt_title', 'Prompt title*:') }}
             {{ Form::text('prompt_title', $prompt->prompt_title) }}<br/>
             {{ Form::label('repeatable', 'Repeatable? ') }}
-            {{ Form::checkbox('repeatable', true, $prompt->repeatable) }}<br/>
+            {{ Form::checkbox('repeatable', 'true', $prompt->repeatable) }}<br/>
+        <hr/>
             <p>Prompts are broken up into concise segments. Define 1 to 5 segments for this prompt:</p>
-            @foreach ($segments as $segment)
-                {{ Form::hidden('segment_id'.$loop->iteration, $segment->id) }}
-                {{ Form::label('segment_title'.$loop->iteration, "Segment title* ($loop->iteration): ") }}
-                {{ Form::text('segment_title'.$loop->iteration, $segment->segment_title) }}<br/>
-                {{ Form::label('prompt_segment_order'.$loop->iteration, 'Segment Order: '.$segment->prompt_segment_order) }}
-                {{ Form::select('prompt_segment_order'.$loop->iteration, $orderOptions, $segment->prompt_segment_order ) }}<br/>
-                {{ Form::label('segment_url'.$loop->iteration, "Segment url ($loop->iteration): ") }}
-                {{ Form::text('segment_url'.$loop->iteration, $segment->segment_url) }}<br/>
-                {{ Form::label('segment_url'.$loop->iteration, "Segment image url ($loop->iteration): ") }}
-                {{ Form::text('segment_image_url'.$loop->iteration, $segment->segment_imageUrl) }}<br/>
-                {{ Form::label('segment_accessory_type'.$loop->iteration, "Segment interaction ($loop->iteration): ") }}
-                {{ Form::select('segment_accessory_type'.$loop->iteration, $path->getInteractionOptions(), $segment->segment_accessory['type'] ) }}<br/>
-                {{ Form::label('segment_accessory_text'.$loop->iteration, "Segment interaction label ($loop->iteration): ") }}
-                {{ Form::text('segment_accessory_text'.$loop->iteration, $segment->segment_accessory['text']['text']) }}<br/>
-                {{ Form::label('segment_options'.$loop->iteration, "All Options ($loop->iteration): ") }}
-                {{ Form::text('segment_options'.$loop->iteration, $segment->getAccessoryOptionsString()) }}<br/>
-                {{ Form::label('segment_answers'.$loop->iteration, "Correct Options ($loop->iteration): ") }}
-                {{ Form::text('segment_answers'.$loop->iteration, $segment->getSegmentAnswersString()) }}<br/>
-                {{ Form::label('segment_text'.$loop->iteration, "Segment text ($loop->iteration):") }}<br/>
-                {{ Form::textarea('segment_text'.$loop->iteration, $segment->segment_text) }}
-                <button type="button" class="btn btn-warning">Delete this segment</button>
-                <hr/>
-            @endforeach
+            <div id="all-segments">
+                @foreach ($segments as $segment)
+                    <div id="segment-{{ $segment->id }}">
+                        @include('curriculum.segment.edit', [ 'index' => $loop->iteration, 'segment' => $segment,'last' => $loop->last ])
+                        @include('curriculum.segment.options', [ 'index' => $loop->iteration, 'segment' => $segment, 'last' => $loop->last ])
+                        <hr/>
+                    </div>
+                @endforeach
+            </div>
             @include('curriculum.segment.new')
             {{ Form::label('key', "*Required") }}<br/>
         @endsection

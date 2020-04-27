@@ -3,11 +3,14 @@
 namespace App\Objects;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
 use phpDocumentor\Reflection\Types\Parent_;
 
 class PromptSegment extends Model
 {
+    use SoftDeletes;
+
     public $accessoryStruct = [
         'text' => [ 'type' => 'plain_text', 'text' => ''],
         'value' => '',
@@ -58,15 +61,38 @@ class PromptSegment extends Model
         return strlen($string) < 2 ? '' : $string;
     }
 
-    public function setPromptSegmentOrder($order)
+    public function moveOrderEarlier()
+    {
+        $currentOrder = (int) $this->prompt_segment_order;
+        Log::debug(__METHOD__.': current prompt segment order: '.$currentOrder);
+        $newOrder = (int) $currentOrder - 1;
+        Log::debug(__METHOD__.': attempting to set new segment order: '.$newOrder);
+        if ($newOrder < 1 || $newOrder > $this->prompt->prompt_segments_count) {
+            Log::debug(__METHOD__.": $newOrder either < 1 or > limit: ".$this->prompt->prompt_segments_count);
+            return false;
+        }
+        return $this->updatePromptSegmentOrder($newOrder);
+    }
+
+    public function moveOrderLater()
+    {
+        Log::debug(__METHOD__.': current prompt segment order: '.$this->prompt_segment_order);
+        $order = (int) $this->prompt_segment_order + 1;
+        if ($order < 1 || $order > $this->prompt->prompt_segments_count) {
+            return false;
+        }
+        return $this->updatePromptSegmentOrder($order);
+    }
+
+    public function updatePromptSegmentOrder($order)
     {
         Log::debug(__CLASS__.': '.__METHOD__.': with order = '.$order);
-        if ($order == $this->prompt_segment_order) return;
-
-        $options = $this->prompt->getSegmentOrderOptions();
+        if ($order == $this->prompt_segment_order) return true;
+        $up = $order > $this->prompt_segment_order ? false : true;
+        $options = $this->prompt->getSegmentOrderOptions(false);
         if (!array_key_exists($order, $options)) {
             Log::debug(__CLASS__.__METHOD__." provided invalid order option = $order");
-            return;
+            return false;
         }
         $segments = $this->prompt->prompt_segments;
         foreach ($segments as $segment) {
@@ -75,12 +101,18 @@ class PromptSegment extends Model
                 $segment->save();
                 continue;
             }
-            if ($segment->prompt_segment_order >= $order) {
+            if ($segment->prompt_segment_order == $order) {
+                $shift = $up ? $order + 1 : $order - 1;
+                $segment->prompt_segment_order = $shift;
+                $segment->save();
+                continue;
+            }
+            if ($segment->prompt_segment_order > $order) {
                 $segment->prompt_segment_order = $segment->prompt_segment_order + 1;
                 $segment->save();
             }
         }
-        return;
+        return true;
     }
     public function save($options = [])
     {

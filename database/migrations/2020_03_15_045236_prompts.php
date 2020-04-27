@@ -22,6 +22,7 @@ class Prompts extends Migration
                 $table->string('prompt_title');
                 $table->boolean('repeatable');
                 $table->timestamps();
+                $table->softDeletes();
 
                 $table->foreign('prompt_path_id')
                     ->references('id')->on('prompt_paths')

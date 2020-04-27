@@ -29,6 +29,7 @@ class PromptSegments extends Migration
                 $table->json('segment_key')->nullable();
                 $table->json('segment_accessory');
                 $table->timestamps();
+                $table->softDeletes();
 
                 $table->foreign('prompt_id')
                     ->references('id')->on('prompts')

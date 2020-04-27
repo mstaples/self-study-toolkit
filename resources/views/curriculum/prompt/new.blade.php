@@ -30,7 +30,7 @@
             {{ Form::label('prompt_title', 'Prompt title:') }}
             {{ Form::text('prompt_title') }}<br/>
             {{ Form::label('repeatable', 'Repeatable? ') }}
-            {{ Form::checkbox('repeatable', true, true) }}<br/>
+            {{ Form::checkbox('repeatable', 'true', true) }}<br/>
             <p>Prompts are broken up into concise segments. Define 1 to 5 segments for this prompt:</p>
             @include('curriculum.segment.new')
         @endsection

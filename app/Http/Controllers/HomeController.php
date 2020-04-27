@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Objects\PromptSegment;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller

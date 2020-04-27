@@ -5,12 +5,22 @@ namespace App\Http\Controllers\Curriculum;
 use App\Http\Controllers\AdminBaseController;
 use App\Objects\PathCategory;
 use App\Objects\PromptPath;
+use App\Objects\PromptSegment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class PathsController extends AdminBaseController
 {
+    public function __construct()
+    {
+        parent::__construct();
+        $this->middleware(function ($request, $next) {
+            $this->nav = 'paths';
+            return $next($request);
+        });
+    }
+
     public function missingPath($type)
     {
         Log::debug("PathsController:missingPath");
@@ -43,6 +53,7 @@ class PathsController extends AdminBaseController
         } else {
             try {
                 $path = $user->prompt_paths()->where('prompt_path_id', $pathId)->firstOrFail();
+                $this->pathId = $pathId;
                 $write = $path->pivot->write_access;
             } catch (\Exception $e) {
                 Log::debug($e);
@@ -57,8 +68,7 @@ class PathsController extends AdminBaseController
         return $this->adminView('curriculum/path/'.$view, [
             'path' => $path,
             'title' => $title,
-            'difficulties' => $difficulties,
-            'nav' => 'paths'
+            'difficulties' => $difficulties
         ]);
     }
 
@@ -68,8 +78,7 @@ class PathsController extends AdminBaseController
         $title = $path->path_title;
         return $this->adminView('curriculum/path/view', [
             'path' => $path,
-            'title' => $title,
-            'nav' => 'paths'
+            'title' => $title
         ]);
     }
 

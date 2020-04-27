@@ -4,11 +4,13 @@ namespace App\Objects;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
 use App\Objects\PromptSegment;
 
 class Prompt extends Model
 {
+    use SoftDeletes;
     private $prompt_path_step, $prompt_title, $repeatable;
 
     protected $fillable = [ 'prompt_path_step', 'prompt_title', 'repeatable' ];
@@ -31,15 +33,16 @@ class Prompt extends Model
 
     public function prompt_segments()
     {
-        return $this->hasMany('App\Objects\PromptSegment');
+        return $this->hasMany('App\Objects\PromptSegment')->orderBy('prompt_segment_order', 'asc');
     }
 
-    public function getSegmentOrderOptions()
+    public function getSegmentOrderOptions($named = true)
     {
         $options = [ 1 => '1' ];
         $count = $this->prompt_segments_count;
         if ($count > 0) {
             $options = array_fill(1, $count, '');
+            if (!$named) return $options;
             foreach ($this->prompt_segments as $segment) {
                 $order = $segment->prompt_segment_order;
                 if (!array_key_exists($order, $options) || $options[$order] != '') {

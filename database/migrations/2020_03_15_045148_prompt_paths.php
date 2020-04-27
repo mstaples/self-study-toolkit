@@ -27,6 +27,7 @@ class PromptPaths extends Migration
                 $table->integer('steps');
                 $table->json('tags');
                 $table->timestamps();
+                $table->softDeletes();
 
                 $table->foreign('path_category_id')
                     ->references('id')->on('path_categories')
