@@ -19,7 +19,7 @@ Route::mixin(new \Laravel\Ui\AuthRouteMethods());
 Route::auth(['verify' => true]);
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->action('Curriculum\PathsController@getPaths');
 });
 
 Route::prefix('curriculum')->group(function(){
