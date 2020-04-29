@@ -21,7 +21,7 @@ class SamplingAnswers extends Migration
                 $table->integer('sampling_question_id');
                 $table->string('sampling_question');
                 $table->string('answer');
-                $table->boolean('indicate')->nullable();
+                $table->boolean('correct')->nullable();
                 $table->timestamps();
 
                 $table->foreign('operator_id')

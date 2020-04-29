@@ -15,9 +15,9 @@ use Illuminate\View\View;
 
 class PromptSegmentsController extends AdminBaseController
 {
-    protected $path;
-    protected $segmentId;
-    protected $segment;
+    public $path;
+    public $segmentId;
+    public $segment;
 
     public function __construct()
     {

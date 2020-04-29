@@ -114,7 +114,11 @@ class PromptsController extends AdminBaseController
         $prompt->prompt_title = $request->input('prompt_title');
         $prompt->repeatable = $repeatable;
         $prompt->save();
-        if ($request->input('next') != 'add') return $this->getSamplingQuestions($pathId);
+        if ($request->input('next') != 'add') {
+            return redirect()->action('Curriculum\SamplingQuestionsController@getSamplingQuestions', [
+                'pathId' => $pathId
+            ]);
+        }
 
         $path = PromptPath::findOrFail($pathId);
         $title = $path->path_title . " Prompt: ". $prompt->prompt_title;
@@ -148,7 +152,6 @@ class PromptsController extends AdminBaseController
         $prompt = new Prompt($newPrompt);
         $path->prompts()->save($prompt);
         $prompt->save();
-        $prompt->setPromptStep($request->input('prompt_step'));
         $prompt = $this->newPromptSegmentFromRequest($request, $prompt);
 
         if ($request->input('next') == 'add') {
@@ -161,8 +164,9 @@ class PromptsController extends AdminBaseController
                 'nav' => 'segments'
             ]);
         }
-
-        return $this->getSamplingQuestions($pathId);
+        return redirect()->action('Curriculum\SamplingQuestionsController@getSamplingQuestions', [
+            'pathId' => $pathId
+        ]);
     }
 
 }

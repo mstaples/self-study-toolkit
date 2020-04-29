@@ -32,7 +32,8 @@
     <button type="button" class="btn btn-danger"
             onclick="deleteContent(
                 '{{ url('curriculum/segments/delete/'.$segment->id) }}',
-                'segment-{{ $segment->id }}'
+                'segment-{{ $segment->id }}',
+                'segment'
                 )">
         Delete segment
     </button>

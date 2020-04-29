@@ -36,7 +36,6 @@ Route::prefix('curriculum')->group(function(){
     });
     Route::get('prompts/{pathId}', 'Curriculum\PromptsController@getPrompts');
     Route::post('prompts/{pathId}', 'Curriculum\PromptsController@postPrompts');
-    Route::any('prompts/', 'Curriculum\PromptsController@viewPrompts');
     Route::any('prompts/view/{pathId}', 'Curriculum\PromptsController@viewPrompts');
     Route::post('prompt/create/{pathId}', 'Curriculum\PromptsController@createPrompt');
     Route::post('prompt/edit/{pathId}/{promptId}', 'Curriculum\PromptsController@editPrompt');
@@ -54,8 +53,15 @@ Route::prefix('curriculum')->group(function(){
         return redirect()->action('Curriculum\PathsController@missingPath', [ 'type' => 'questions' ]);
     });
     Route::get('questions/{pathId}', 'Curriculum\SamplingQuestionsController@getSamplingQuestions');
+    Route::post('questions/{pathId}', 'Curriculum\SamplingQuestionsController@postSamplingQuestions');
     Route::post('questions/create/{pathId}', 'Curriculum\SamplingQuestionsController@createSamplingQuestion');
-    Route::post('questions/edit/{questionId}', 'Curriculum\SamplingQuestionsController@editSamplingQuestion');
+    Route::post('questions/edit/{pathId}/{questionId}', 'Curriculum\SamplingQuestionsController@editSamplingQuestion');
+    Route::post('questions/create/{pathId}', 'Curriculum\SamplingQuestionsController@createSamplingQuestion');
+    // Questions answer options
+    Route::post('options/create/{questionId}', 'Curriculum\SamplingOptionsController@createSamplingOption');
+    Route::post('options/edit/{questionId}/{optionId}', 'Curriculum\SamplingOptionsController@editSamplingOption');
+    Route::post('options/delete/{questionId}/{optionId}', 'Curriculum\SamplingOptionsController@deleteSamplingOption');
+    Route::post('options/all/{questionId}', 'Curriculum\SamplingOptionsController@allSamplingOptions');
 // Users
     Route::get('editors', function () {
         return redirect()->action('Curriculum\PathsController@missingPath', [ 'type' => 'editors' ]);

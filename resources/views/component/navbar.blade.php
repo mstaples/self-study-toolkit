@@ -14,7 +14,7 @@
         <li @if($nav == 'segments')
         class="current"
         @endif>
-        <a href="{{ url('curriculum/prompt/'.$promptId ?? '') }}">Segments</a>
+        <a href="{{ url('curriculum/prompts/'.$promptId ?? '') }}">Segments</a>
     </li>
         <li @if($nav == 'questions')
         class="current"

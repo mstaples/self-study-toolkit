@@ -15,13 +15,13 @@ class AdminBaseController extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
-    protected $message = '';
-    protected $message_role = 'alert';
-    protected $pathId = '';
-    protected $promptId = '';
-    protected $segmentId = '';
-    protected $questionId = '';
-    protected $nav = '';
+    public $message = '';
+    public $message_role = 'info';
+    public $promptId = '';
+    public $pathId = '';
+    public $segmentId = '';
+    public $questionId = '';
+    public $nav = '';
 
     public function __construct()
     {
@@ -37,6 +37,7 @@ class AdminBaseController extends BaseController
         foreach ($selection_ids as $id) {
             if (!array_key_exists($id, $data)) $data[$id] = $this->$id;
         }
+        Log::debug($this->message);
         return view($view, $data);
     }
 

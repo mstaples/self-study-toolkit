@@ -52,6 +52,11 @@ class PromptPath extends Model
         return $this->hasMany('App\Objects\Prompt');
     }
 
+    public function sampling_questions()
+    {
+        return $this->hasMany('App\Objects\SamplingQuestion');
+    }
+
     public function hasTag($tag)
     {
         return in_array($tag, json_decode($this->tags, true));

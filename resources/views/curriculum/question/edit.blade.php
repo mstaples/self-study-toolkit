@@ -1,0 +1,51 @@
+
+@extends('layouts.left')
+
+@section('title', $title)
+
+@section('open-main')
+    <div class="form-check">
+        {{ Form::open([
+            'url' => 'curriculum/questions/edit/'.$question->prompt_path->id.'/'.$question->id,
+            'id' => 'edit-question'
+        ]) }}
+@endsection
+
+@section('sidebar')
+    <section class="box">
+        <h2>{{ Form::label('question_difficulty', 'Question difficulty') }}</h2>
+        <p>A question's difficulty reflects how strong a grasp on the path's thesis concepts or skills someone likely has if they know the answer.</p>
+        {{ Form::select('question_difficulty', $question->getDifficulties(), $question->question_difficulty) }}
+        <br/>
+        <button type="submit" form="edit-question" value="Submit" class="btn btn-success fa-pull-right">
+            Save
+        </button>
+    </section>
+@endsection
+
+@section('content')
+        <h2>{{ Form::label('question', 'Sampling question') }}</h2>
+        <p>A sampling question aims to gage how much someone might benefit
+            from taking themselves through this path.</p>
+        {{ Form::textarea('question', $question->question) }}
+        <hr/>
+        <h3>Options</h3>
+        <p>Any number of answer options is useful. A random subset of available answer options will be selected, including at least one correct option, each time this sampling question is presented.</p>
+        <div id="options-all">
+            @if($question->sampling_options)
+            @foreach($question->sampling_options as $option)
+                <div id="option-{{ $option->id }}-div">
+                    @include('curriculum.option.edit', [ 'index' => $loop->iteration, 'option' => $option,'last' => $loop->last, 'questionId' => $question->id ])
+                </div>
+            @endforeach
+            @endif
+            <div id="option-new-div">
+                @include('curriculum.option.new', [ 'questionId' => $question->id ])
+            </div>
+        </div>
+@endsection
+
+@section('close-main')
+            {{ Form::close() }}
+    </div>
+@endsection
