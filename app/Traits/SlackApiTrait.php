@@ -8,8 +8,8 @@ use App\Objects\Prompt;
 use App\Objects\PromptResponse;
 use App\Objects\SamplingAnswer;
 use App\Objects\SamplingQuestion;
+use App\Objects\SlackAction;
 use App\Objects\User;
-use App\SlackAction;
 
 trait SlackApiTrait
 {

@@ -1,79 +1,74 @@
-<p align="center"><img src="https://res.cloudinary.com/dtfbvvkyp/image/upload/v1566331377/laravel-logolockup-cmyk-red.svg" width="400"></p>
+#Inclusive Teamwork Self Study Toolkit
+This guide is for getting started as a developer on this project, not for installing and using the app.
+##Setup - Local
+Prerequisites:
+- [Homestead VM](https://laravel.com/docs/7.x/homestead)
+- with [ngrok](https://ngrok.com/) or another tunnel option installed
+- with [Composer](https://getcomposer.org/) installed
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/d/total.svg" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/v/stable.svg" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/license.svg" alt="License"></a>
-</p>
+Install the repo into a new project directory (not on the VM). Add the new project to the Homestead.yaml `folders:` section.
+```
+folders:
+    - map: ~/php/self-study-toolkit
+        to: /home/vagrant/self-study-toolkit
+```
 
-## About Laravel
+From your VM cli, move into the mirrored project directory, copy the .env.example to a new .env file, and update the relevant local values.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Still in the mirrored project directory on your VM, run `composer install` followed by `php artisan migrate:fresh --seed` to create your database.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Setup - Slack
+To test Slack API interactions which require the API to reach a callback, you will need to setup your own test Slack app.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Go to the Slack app developer page and use the "Create New App" button.
 
-## Learning Laravel
+###App config - Basic Information
+From the Basic Information tab, select the following under "Add features and functionality"
+- Incoming Webhooks
+- Interactive Components
+- Event Subscriptions
+- Bots
+- Permissions
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Create a new Slack app to test your development, and link that under "Install your app to your workspace"
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+###App config - App Home
+From the App Home tab, under "Your App’s Presence in Slack", add the following name:
+```
+Display Name (Bot Name): helper_bot
+Default Name: helper_bot
+```
 
-## Laravel Sponsors
+Under "Show Tabs" toggle the sliders to enable "Home Tab" and "Messages Tab"
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+###App config - Incoming Webhooks
+From the Incoming Webhooks tab, toggle the slider to enable "Activate Incoming Webhooks"
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[British Software Development](https://www.britishsoftware.co)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- [UserInsights](https://userinsights.com)
-- [Fragrantica](https://www.fragrantica.com)
-- [SOFTonSOFA](https://softonsofa.com/)
-- [User10](https://user10.com)
-- [Soumettre.fr](https://soumettre.fr/)
-- [CodeBrisk](https://codebrisk.com)
-- [1Forge](https://1forge.com)
-- [TECPRESSO](https://tecpresso.co.jp/)
-- [Runtime Converter](http://runtimeconverter.com/)
-- [WebL'Agence](https://weblagence.com/)
-- [Invoice Ninja](https://www.invoiceninja.com)
-- [iMi digital](https://www.imi-digital.de/)
-- [Earthlink](https://www.earthlink.ro/)
-- [Steadfast Collective](https://steadfastcollective.com/)
-- [We Are The Robots Inc.](https://watr.mx/)
-- [Understand.io](https://www.understand.io/)
-- [Abdel Elrafa](https://abdelelrafa.com)
-- [Hyper Host](https://hyper.host)
-- [Appoly](https://www.appoly.co.uk)
-- [OP.GG](https://op.gg)
-- [云软科技](http://www.yunruan.ltd/)
+Under "Webhook URLs for Your Workspace" click the button to "Add New Webhook to Workspace" and select a channel in your test Slack for the app to post to when using the new webhook.
 
-## Contributing
+This will generate a curl sample you can use to test posting to your test channel.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+###App config - Interactivity & Shortcuts
+From the Interactivity & Shortcuts tab, toggle the slider to enable "Interactivity". 
 
-## Code of Conduct
+The URL you provide as "Request URL" is where the Slack App will send data from user interactions. The path beyond your base URL should be "/slack/action" 
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+If you don't have an ngrok subdomain you will need to update this with the generated URL each time you need to restart ngrok.
 
-## Security Vulnerabilities
+Under "Select Menus" add your base URL again with the path "slack/menus".
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+###App config - OAuth & Permissions
+From the OAuth & Permissions tab, scroll down to the "Scopes" section and add any needed scopes to your bot.
 
-## License
+###App config - Event Subscriptions
+From the Event Subscriptions tab, toggle the slider to "Enable Events" and add your base URL with the path "/slack/events".
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Under "Subscribe to events on behalf of users" and click the "Add Workspace Event" button and then select "app_home_opened" as the event to subscribe to.
+
+##Development
+Please, do all new development in a separate branch named for a specific development goal and submit a Pull Request when you're ready for your work to be integrated.
+
+Be sure to pull down and integrate changes from the master branch before making new commits.
+
+###TODO
+
