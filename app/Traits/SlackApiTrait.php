@@ -15,7 +15,7 @@ trait SlackApiTrait
 {
     public $defaultView;
 
-    public function __construct()
+    public function setDefaultHomeTab()
     {
         $this->defaultView = [
             'view' => [

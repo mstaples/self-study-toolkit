@@ -45,7 +45,8 @@ class UpdateSlackHome extends Command
      */
     public function handle()
     {
-        $json = $this->argument('json') ?: $this->defaultView;
+        $this->setDefaultHomeTab();
+        $json = $this->argument('json') === null ? $this->defaultView : $this->argument('json');
         $json['user_id'] = getenv('USER_ID');
         Log::debug('UpdateSlackHome json keys? '. implode(', ', array_keys($json)));
         $headers =  [
