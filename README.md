@@ -55,17 +55,17 @@ This will generate a curl sample you can use to test posting to your test channe
 ### App config - Interactivity & Shortcuts
 From the Interactivity & Shortcuts tab, toggle the slider to enable "Interactivity". 
 
-The URL you provide as "Request URL" is where the Slack App will send data from user interactions. The path beyond your base URL should be "/slack/action" 
+The URL you provide as "Request URL" is where the Slack App will send data from user interactions. The path beyond your base URL should be "/api/slack/action" 
 
 If you don't have an ngrok subdomain you will need to update this with the generated URL each time you need to restart ngrok.
 
-Under "Select Menus" add your base URL again with the path "slack/menus".
+Under "Select Menus" add your base URL again with the path "/api/slack/menus".
 
 ### App config - OAuth & Permissions
 From the OAuth & Permissions tab, scroll down to the "Scopes" section and add any needed scopes to your bot.
 
 ### App config - Event Subscriptions
-From the Event Subscriptions tab, toggle the slider to "Enable Events" and add your base URL with the path "/slack/events".
+From the Event Subscriptions tab, toggle the slider to "Enable Events" and add your base URL with the path "/api/slack/events".
 
 Under "Subscribe to events on behalf of users" and click the "Add Workspace Event" button and then select "app_home_opened" as the event to subscribe to.
 
@@ -75,4 +75,9 @@ Please, do all new development in a separate branch named for a specific develop
 Be sure to pull down and integrate changes from the master branch before making new commits.
 
 ### TODO
-
+- Initiate sampling questions evaluation on initial opt-in action (app/Http/Traits/SlackApiTrait: firstSampling()).
+- Evaluating and storing user responses (app/Http/Traits/SlackApiTrait: parseActions(Operator $operator, $slackActions)).
+- Available Paths menu based on Sampling evaluation
+- Prompt delivery
+- Feedback request delivery
+- Feedback record

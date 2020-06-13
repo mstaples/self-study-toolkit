@@ -20,6 +20,7 @@ class Operators extends Migration
             $table->string('slack_user_id');
             $table->string('name');
             $table->string('nickname')->nullable();
+            $table->boolean('opt_in')->nullable();
             $table->json('journey_state')->nullable();
             $table->timestamps();
         });

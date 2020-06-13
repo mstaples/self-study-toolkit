@@ -54,7 +54,6 @@ trait SlackApiTrait
 
     protected function firstSampling()
     {
-
         return $this->defaultView;
     }
 

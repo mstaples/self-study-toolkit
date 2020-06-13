@@ -19,14 +19,20 @@ class SlackController extends Controller
         $user = $body['user'];
         $actions = $body['actions'];
         $operator = Operator::where('slack_user_id', $user['id'])->first();
-        if (!$operator && $actions[0]['block_id'] != getenv('SLACK_SAVE_USER_BLOCK_ID')) {
+        if (empty($operator) && $actions[0]['block_id'] != getenv('SLACK_SAVE_USER_BLOCK_ID')) {
             Log::debug('SlackController:actions no operator, no agreement, return default');
             $json = $this->defaultView;
-        } elseif ($actions[0]['block_id'] == getenv('SLACK_SAVE_USER_BLOCK_ID')) {
+        } elseif (empty($operator) && $actions[0]['block_id'] == getenv('SLACK_SAVE_USER_BLOCK_ID')) {
             Log::debug('SlackController:actions no operator, found agreement, make new operator, send first sampling');
             $operator = new Operator();
             $operator->slack_user_id = $user['id'];
             $operator->name = $user['name'];
+            $operator->opt_in = true;
+            $operator->save();
+            $json = $this->firstSampling();
+        } elseif ($actions[0]['block_id'] == getenv('SLACK_SAVE_USER_BLOCK_ID')) {
+            Log::debug('SlackController:actions operator found, record agreement, send first sampling');
+            $operator->opt_in = true;
             $operator->save();
             $json = $this->firstSampling();
         } else {
