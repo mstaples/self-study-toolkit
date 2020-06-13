@@ -1,4 +1,5 @@
 # Inclusive Teamwork Self Study Toolkit
+
 This guide is for getting started as a developer on this project, not for installing and using the app.
 
 ## Setup - Local
