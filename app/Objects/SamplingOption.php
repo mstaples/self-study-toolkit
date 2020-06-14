@@ -11,7 +11,7 @@ class SamplingOption extends Model
     public $states = [
         'draft', 'review', 'trial', 'live'
     ];
-    protected $fillable = ['sampling_question_id', 'question_text', 'option', 'correct', 'state' ];
+    protected $fillable = [ 'sampling_question_id', 'question_text', 'option', 'correct', 'state' ];
     protected $attributes = [
             'state' => 'draft'
         ];

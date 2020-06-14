@@ -13,5 +13,6 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([PathCategoriesTableSeeder::class]);
         $this->call([PromptPathsTableSeeder::class]);
+        $this->call([SamplingQuestionsTableSeeder::class]);
     }
 }
