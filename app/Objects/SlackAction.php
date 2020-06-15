@@ -9,6 +9,7 @@ use App\Objects\PromptResponse;
 use App\Objects\SamplingAnswer;
 use App\Objects\SamplingQuestion;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class SlackAction extends Model
 {
@@ -16,7 +17,7 @@ class SlackAction extends Model
      * block ids are constructed:
      * [prompt] . prompt_category_id . prompt_path_id . prompt_id . segment
      * [feedback] . feedback_request_id
-     * [sampling] . sampling_question_id
+     * [sampling_question] . sampling_question_id . count
      * */
     public $block_id;
     public $type;
@@ -27,10 +28,37 @@ class SlackAction extends Model
         parent::__construct($attributes);
     }
 
+    public function buildAction($slackAction)
+    {
+        $this->type = $slackAction['type'];
+        $this->block_id = $slackAction['block_id'];
+        switch($this->type) {
+            case 'radio_buttons':
+                $this->value = $slackAction['selected_option']['value'];
+            break;
+            default;
+                $this->valud = $slackAction['value'];
+            break;
+        }
+        return;
+    }
+
     public function getType()
     {
         $components = explode('.',$this->block_id);
         return $components[0];
+    }
+
+    public function getId()
+    {
+        $components = explode('.',$this->block_id);
+        return $components[1];
+    }
+
+    public function getCount()
+    {
+        $components = explode('.',$this->block_id);
+        return $components[2];
     }
 
     public function getAssociatedId($type=null)
@@ -48,22 +76,28 @@ class SlackAction extends Model
         return $components[array_search($type,$types)];
     }
 
-    protected function parseAction(Operator $operator)
+    public function takeAction(Operator $operator)
     {
         switch($this->getType()) {
-            case 'sampling':
-                $samplingQuestionId = $this->getAssociatedId();
+            case 'sampling_question':
+                $samplingQuestionId = $this->getId();
                 $question = SamplingQuestion::find($samplingQuestionId);
+                $option = SamplingOption::find($this->value);
+
                 $action = new SamplingAnswer();
                 $action->operator()->associate($operator);
                 $action->sampling_question_id = $samplingQuestionId;
                 $action->sampling_question = $question->question;
-                $action->answer = $this->value;
+                $action->answer = $option->option;
+                $action->correct = $option->correct;
                 $action->save();
+
+                return $this->getCount() + 1;
                 break;
             case 'prompt':
                 $promptId = $this->getAssociatedId('prompt');
                 $prompt = Prompt::find($promptId);
+
                 $action = new PromptResponse();
                 $action->prompt_id = $promptId;
                 $action->prompt_title = $prompt->prompt_title;
@@ -73,6 +107,7 @@ class SlackAction extends Model
             case 'feedback':
                 $feedbackRequestId = $this->getAssociatedId();
                 $request = SamplingQuestion::find($feedbackRequestId);
+
                 $action = new FeedbackRecord();
                 $action->feedback_request_id = $feedbackRequestId;
                 $action->feedback_request = $request->request;
@@ -80,5 +115,6 @@ class SlackAction extends Model
                 $action->save();
                 break;
         }
+        return;
     }
 }

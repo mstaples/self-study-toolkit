@@ -49,9 +49,10 @@ class UpdateSlackHome extends Command
         $json = $this->argument('json') === null ? $this->defaultView : $this->argument('json');
         $json['user_id'] = getenv('USER_ID');
         Log::debug('UpdateSlackHome json keys? '. implode(', ', array_keys($json)));
+        Log::debug($json);
         $headers =  [
             'Authorization' => 'Bearer ' . getenv('BOT_TOKEN'),
-            'Content-type'      => 'application/json'
+            'Content-type'      => 'application/json; charset=utf-8'
         ];
 
         $setup = [
@@ -65,6 +66,7 @@ class UpdateSlackHome extends Command
         try {
             $response = $this->client->request('POST', $url, $setup)->getBody()->getContents();
             $response = json_decode($response, true);
+            Log::debug($response);
             if (!array_key_exists('response_metadata',$response)
                 || !array_key_exists('messages',$response['response_metadata'])) {
                 var_dump($response);

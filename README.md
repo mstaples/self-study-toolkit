@@ -94,8 +94,6 @@ Be sure to pull down and integrate changes from the master branch before making 
 
 ### TODO
 
-- Initiate sampling questions evaluation on initial opt-in action (app/Http/Traits/SlackApiTrait: firstSampling()).
-- Evaluating and storing user responses (app/Http/Traits/SlackApiTrait: parseActions(Operator $operator, $slackActions)).
 - Available Paths menu based on Sampling evaluation
 - Prompt delivery
 - Feedback request delivery
