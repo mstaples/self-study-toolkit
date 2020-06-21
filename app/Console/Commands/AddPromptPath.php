@@ -96,20 +96,22 @@ class AddPromptPath extends Command
         $this->info($category->description);
         $this->info($category->min . ' - ' . $category->max . ' steps over ' . $category->span . ' ' . $category->per);
         $pathName = $this->ask("What's a good title for the new $categoryName path? ");
-        $difficulty = $this->choice("How difficult do you intend the new $categoryName path to be? ",
-            $this->getDifficulties());
+        $level = $this->choice("What level of learners do you intend the new $categoryName path to be for? ",
+            $this->getLevels());
         $steps = $category->max * $category->span;
         $minSteps = $category->min * $category->span;
-        $tags = $this->ask("Comma separated list of tags you'd like added to this path: ");
-        $tags = explode(',', $tags);
+        $knowledges = $this->ask("Topics you associate with this path: ");
 
         $path = new PromptPath ();
         $path->path_title = $pathName;
-        $path->path_difficulty = $difficulty;
+        $path->path_level = $level;
         $path->path_category = $categoryName;
         $path->steps = $steps;
-        $path->tags = json_encode($tags);
         $path->category()->associate($category);
+        foreach ($knowledges as $knowledgeId) {
+            $knowledge = DB::table('knowledges')->find($knowledgeId);
+            $path->knowledges()->attach($knowledge);
+        }
         $path->save();
 
         $continue = $this->choice("$categoryName need $steps prompts to be created. Operators may choose to see as few as " .

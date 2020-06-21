@@ -20,6 +20,7 @@ class PromptSegments extends Migration
                 $table->increments('id');
                 $table->integer('prompt_segment_order');
                 $table->unsignedInteger('prompt_id');
+                $table->unsignedInteger('created_by_id')->nullable();
                 $table->string('segment_title');
                 $table->string('segment_type');
                 $table->string('segment_imageUrl')->nullable();
@@ -30,6 +31,10 @@ class PromptSegments extends Migration
                 $table->json('segment_accessory');
                 $table->timestamps();
                 $table->softDeletes();
+
+                $table->foreign('created_by_id')
+                    ->references('id')->on('users')
+                    ->onDelete('set null');
 
                 $table->foreign('prompt_id')
                     ->references('id')->on('prompts')

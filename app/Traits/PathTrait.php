@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Objects\Knowledge;
 use App\Objects\PathCategory;
 use App\Objects\PromptPath;
 
@@ -23,6 +24,7 @@ trait PathTrait
     public function getPossibleStates()
     {
         return [
+            'draft' => 'Saved progress, not ready for review.',
             'review' => 'Needs another teacher to proof read.',
             'trial' => 'Available to select and review by teachers, leaders, and mentors.',
             'live' => 'Available to all operators.'
@@ -39,8 +41,15 @@ trait PathTrait
         ];
     }
 
+    public function getDepths()
+    {
+        return [
+            ''
+        ];
+    }
+
     // single source of truth for these names
-    public function getDifficulties()
+    public function getLevels()
     {
         return [
             'Basic' => "Basic prompts assume the operator is equipped with no more than a positive attitude.
@@ -72,13 +81,36 @@ trait PathTrait
         return $set;
     }
 
-    public function getTags()
+    public function pathKnowledges()
     {
-        $paths = PromptPath::select(['tags', 'id'])->get();
-        $set = [];
-        foreach ($paths as $path) {
-            $set = array_unique(array_merge(json_decode($path->tags, true), $set), SORT_REGULAR);
+        $topics = [];
+        foreach ($this->knowledges as $knowledge) {
+            $topics[$knowledge->id] = $knowledge->name;
         }
-        return $set;
+        return $topics;
+    }
+
+    /*
+     * returns [ id => name ] when markPathKnowledges = false
+     * returns [ name => boolean ] when markPathKnowledges = true
+     * */
+    public function allKnowledges($markPrerequisites = true, $markPathKnowledges = false)
+    {
+        $all = Knowledge::all();
+        $topics = [];
+        foreach ($all as $each) {
+            $name = $each.name;
+            if ($markPrerequisites && $each.prerequisites) {
+                $name = $name . "*";
+            }
+            if ($markPathKnowledges) {
+                $topics[$each.name] = true;
+                $has = $this->knowledges()->where('name', $each.name)->first();
+                if (empty($has)) $topics[$each.name] = false;
+                continue;
+            }
+            $topics[$each.id] = $name;
+        }
+        return $topics;
     }
 }

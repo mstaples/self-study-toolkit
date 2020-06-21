@@ -18,18 +18,21 @@ class FeedbackRecords extends Migration
             Schema::create('feedback_records', function (Blueprint $table) {
                 $table->increments('id');
                 $table->unsignedInteger('operator_id');
-                $table->unsignedInteger('secondary_operator_id')->nullable();
-                $table->unsignedInteger('tertiary_operator_id')->nullable();
+                $table->unsignedInteger('author_id')->nullable();
+                $table->string('relationship'); // primary, secondary, tertiary
                 $table->integer('feedback_request_id');
                 $table->string('feedback_request');
                 $table->string('answer')->nullable();
                 $table->integer('rating')->nullable();
-                $table->json('notebook_snapshot')->nullable();
                 $table->timestamps();
 
                 $table->foreign('operator_id')
                     ->references('id')->on('operators')
                     ->onDelete('cascade');
+
+                $table->foreign('author_id')
+                    ->references('id')->on('users')
+                    ->onDelete('set null');
             });
         }
     }

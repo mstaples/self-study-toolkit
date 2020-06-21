@@ -11,7 +11,7 @@
             <section class="box">
                 <h3>{{ $path->path_title }}</h3>
                 <p>{{ $path->path_thesis }}</p>
-                {{ Form::label('path_difficulty', 'Path difficulty: '.$path->path_difficulty) }}
+                {{ Form::label('path_level', 'Path level: '.$path->path_level) }}
                 <br/>
                 {{ Form::label('path_category', 'Path category: '.$path->path_category) }}
                 <br/>
@@ -31,6 +31,8 @@
             {{ Form::text('prompt_title', $prompt->prompt_title) }}<br/>
             {{ Form::label('repeatable', 'Repeatable? ') }}
             {{ Form::checkbox('repeatable', 'true', $prompt->repeatable) }}<br/>
+            {{ Form::label('optional', 'Optional? ') }}
+            {{ Form::checkbox('optional', 'true', $prompt->optional) }}<br/>
         <hr/>
             <p>Prompts are broken up into concise segments. Define 1 to 5 segments for this prompt:</p>
             <div id="all-segments">

@@ -1,14 +1,16 @@
 {
     "path1": {
         "ready": true,
+        "created_by_id": null,
         "path_category": "Interactions",
         "path_title": "Circle of trust",
-        "path_difficulty": "basic",
+        "path_level": "basic",
         "path_thesis": "Trust is vital to the success of every interaction, relationship, team, and organization. Understanding how trust is created, maintained, and lost is a skill to be learned and mastered through continual practice.",
-        "tags": ["relationships", "teamwork", "introspection", "community"],
+        "knowledges": ["relationships", "teamwork", "introspection", "community"],
         "prompts": {
             "1": {
                 "repeatable": false,
+                "optional": false,
                 "prompt_title": "Evolution of Trust",
                 "prompt_segments": {
                     "1": {
@@ -149,6 +151,7 @@
             },
             "2": {
                 "repeatable": false,
+                "optional": true,
                 "prompt_title": "Benefit of the doubt",
                 "prompt_segments": {
                     "1": {
@@ -206,6 +209,7 @@
             },
             "3": {
                 "repeatable": true,
+                "optional": false,
                 "prompt_title": "Reflecting on trust",
                 "prompt_segments": {
                     "1": {
@@ -260,6 +264,7 @@
             },
             "4": {
                 "repeatable": true,
+                "optional": false,
                 "prompt_title": "Introspecting on trust ",
                 "prompt_segments": {
                     "1": {
@@ -314,12 +319,13 @@
             },
             "5": {
                 "repeatable": false,
+                "optional": true,
                 "prompt_title": "Elements of trust",
                 "prompt_segments": {
                     "1": {
                         "type": "section",
                         "title": "Mental model",
-                        "text": "Based on the simplified model for learning about communities of trust in Evolution of Trust, what are some key elements for creating trust?",
+                        "text": "Based on the simple model found in the Evolution of Trust game, what are some key elements for creating trust?",
                         "imageUrl": "",
                         "url": "https://ncase.me/trust",
                         "accessory": {
@@ -349,14 +355,16 @@
     },
     "path2": {
         "ready": false,
+        "created_by_id": null,
         "path_category": "Habits",
         "path_title": "Hometown bias",
-        "path_difficulty": "basic",
+        "path_level": "basic",
         "path_thesis": "Getting to know bias as a burden of nostalgia helps us expose its nuance and accept its permanent presence in our lives.",
-        "tags": ["words", "bias", "introspection"],
+        "knowledges": ["words", "bias", "introspection"],
         "prompts": {
             "1": {
                 "repeatable": false,
+                "optional": false,
                 "prompt_title": "Evolution of Trust",
                 "prompt_segments": {
                     "1": {
@@ -490,9 +498,9 @@
         "ready": false,
         "path_category": "Habits",
         "path_title": "Stupendous Badass",
-        "path_difficulty": "basic",
+        "path_level": "basic",
         "path_thesis": "The human body is amazing and noticing the ways one works where others are challenged broadens perspective in important ways.",
-        "tags": ["perception", "privilege", "body"],
+        "knowledges": ["perception", "privilege", "body"],
         "prompts": {
             "1": {
 

@@ -80,7 +80,7 @@ class PromptSegmentsController extends AdminBaseController
         Log::debug($this->message);
         $segment = PromptSegment::find($segmentId);
         $prompt = $segment->prompt;
-        $segments = $prompt->prompt_segments;
+        $segments = $prompt->ordered_segments;
         return $this->adminView('curriculum/segment/all', [ 'segments' => $segments, 'path' => $this->path ]);
     }
 
@@ -97,7 +97,7 @@ class PromptSegmentsController extends AdminBaseController
         Log::debug($this->message);
         $segment = PromptSegment::find($segmentId);
         $prompt = $segment->prompt;
-        $segments = $prompt->prompt_segments;
+        $segments = $prompt->ordered_segments;
         return $this->adminView('curriculum/segment/all', [ 'segments' => $segments, 'path' => $this->path ]);
     }
 }

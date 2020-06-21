@@ -10,13 +10,13 @@
 
 @section('sidebar')
     <section class="box">
-        {{ Form::label('path_difficulty', 'Path difficulty: '.ucfirst($path->path_difficulty)) }}
+        {{ Form::label('path_level', 'Path level: '.ucfirst($path->path_level)) }}
         <br/>
         {{ Form::label('path_category', 'Path category: '.$path->category->name) }}
         <br/>
-        {{ Form::label('existing_tags', 'Tags:') }}<br/>
-        @foreach ($path->getTags() as $tag)
-            {{ Form::label('tag_'.$tag, $tag) }}<br/>
+        {{ Form::label('knowledges', 'Topics:') }}<br/>
+        @foreach ($knowledges as $knowledge)
+            {{ Form::label('knowledge_'.$knowledge, $knowledge) }}<br/>
         @endforeach
         <br/>
         {{ Form::submit('Continue to prompts') }}

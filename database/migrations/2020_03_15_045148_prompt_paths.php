@@ -20,12 +20,11 @@ class PromptPaths extends Migration
                 $table->unsignedInteger('path_category_id');
                 $table->unsignedInteger('created_by_id')->nullable();
                 $table->string('state');
-                $table->string('path_difficulty');
+                $table->string('path_level');
                 $table->string('path_category');
                 $table->string('path_title')->unique();
                 $table->text('path_thesis');
                 $table->integer('steps');
-                $table->json('tags');
                 $table->timestamps();
                 $table->softDeletes();
 
@@ -35,7 +34,7 @@ class PromptPaths extends Migration
 
                 $table->foreign('created_by_id')
                     ->references('id')->on('users')
-                    ->onDelete('cascade');
+                    ->onDelete('set null');
             });
         }
     }

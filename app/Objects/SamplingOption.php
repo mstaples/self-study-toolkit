@@ -13,7 +13,8 @@ class SamplingOption extends Model
     ];
     protected $fillable = [ 'sampling_question_id', 'question_text', 'option', 'correct', 'state' ];
     protected $attributes = [
-            'state' => 'draft'
+            'state' => 'draft',
+            'question_text' => ''
         ];
     //
     public function sampling_question()

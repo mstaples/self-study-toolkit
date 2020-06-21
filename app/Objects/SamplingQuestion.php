@@ -7,10 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class SamplingQuestion extends Model
 {
     protected $stateOptions = [ 'review', 'trial', 'live' ];
-    protected $difficultyOptions = [ 'vague', 'passing', 'familiar', 'deep' ];
+    protected $depthOptions = [ 'vague', 'passing', 'familiar', 'deep' ];
 
-    protected $fillable = [ 'state', 'question_difficulty', 'question', 'answer_options' ];
-    protected $casts = [ 'answer_options' => 'array' ];
+    protected $fillable = [ 'state', 'depth', 'question' ];
     protected $attributes = [ 'state' => 'review' ];
 
     public function getBlockId()
@@ -18,9 +17,9 @@ class SamplingQuestion extends Model
         return 'SQ' . $this->id;
     }
 
-    public function prompt_path()
+    public function knowledges()
     {
-        return $this->belongsTo('App\Objects\PromptPath');
+        return $this->belongsToMany('App\Objects\Knowledge', 'knowledges_questions', 'path_id', 'question_id');
     }
 
     public function sampling_options()
@@ -28,9 +27,9 @@ class SamplingQuestion extends Model
         return $this->hasMany('App\Objects\SamplingOption');
     }
 
-    public function getDifficulties()
+    public function getDepths()
     {
-        return $this->difficultyOptions;
+        return $this->depthOptions;
     }
 
     public function getStates()

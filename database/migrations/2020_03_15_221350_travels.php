@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatePathsTable extends Migration
+class Travels extends Migration
 {
     /**
      * Run the migrations.
@@ -13,27 +13,23 @@ class CreatePathsTable extends Migration
      */
     public function up()
     {
-        Schema::create('paths', function (Blueprint $table) {
+        Schema::create('travels', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('operator_id')->unsigned();
-            $table->integer('prompt_path_id')->unsigned();
-            $table->integer('next_prompt_id')->unsigned()->nullable();
-            $table->timestamp('last_prompt');
-            $table->integer('repeat');
-            $table->boolean('active');
+            $table->integer('path_id')->unsigned()->nullable();
+            $table->boolean('completed');
+            $table->string('level'); // basic, student, mentor, leader, teacher
+            $table->json('notebook');
+            $table->timestamp('completed_on');
             $table->timestamps();
 
             $table->foreign('operator_id')
                 ->references('id')->on('operators')
                 ->onDelete('cascade');
 
-            $table->foreign('prompt_path_id')
+            $table->foreign('path_id')
                 ->references('id')->on('prompt_paths')
-                ->onDelete('cascade');
-
-            $table->foreign('next_prompt_id')
-                ->references('id')->on('prompts')
-                ->onDelete('cascade');
+                ->onDelete('set null');
         });
     }
 
@@ -44,6 +40,6 @@ class CreatePathsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('paths');
+        Schema::dropIfExists('travels');
     }
 }

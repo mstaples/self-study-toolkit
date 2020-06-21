@@ -57,29 +57,35 @@ class ImportPaths extends Command
             $this->error("No data found.");
         } else foreach ($values as $row) {
             if (!array_key_exists(4, $row)) { break; }
-            $difficulty = $row[0];
+            $level = $row[0];
             $categoryName = $row[1];
             $title = $row[2];
             $thesis = $row[3];
-            $tags = $row[4];
+            $knowledges = $row[4];
             // Print columns A and E, which correspond to indices 0 and 4.
-            $this->info("adding $title ($categoryName: $difficulty)\n");
+            $this->info("adding $title ($categoryName: $level)\n");
 
             $category = PathCategory::where('name', $categoryName)->first();
             $steps = $category->max * $category->span;
-            $tags = explode(',', $tags);
+            $knowledges = explode(',', $knowledges);
 
             $newPath = PromptPath::firstOrNew([
                 'path_title' => $title,
                 'path_category' => $categoryName,
-                'path_difficulty' => $difficulty
+                'path_level' => $level
             ]);
 
             $newPath->path_thesis = $thesis;
-            $newPath->tags = json_encode($tags);
             $newPath->steps = $steps;
             $newPath->category()->associate($category);
             $newPath->save();
+
+            foreach ($knowledges as $knowledge) {
+                $know = DB::table('knowledges')->where('name', $knowledge)->first();
+                if ($know) {
+                    $know->paths()->attach($newPath);
+                }
+            }
         }
     }
 }

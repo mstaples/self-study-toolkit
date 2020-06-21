@@ -11,9 +11,9 @@ use App\Objects\PromptSegment;
 class Prompt extends Model
 {
     use SoftDeletes;
-    private $prompt_path_step, $prompt_title, $repeatable;
+    private $prompt_path_step, $prompt_title, $repeatable, $optional;
 
-    protected $fillable = [ 'prompt_path_step', 'prompt_title', 'repeatable' ];
+    protected $fillable = [ 'prompt_path_step', 'prompt_title', 'repeatable', 'optional' ];
 
     protected $casts = [
         'prompt_segments' => 'array',
@@ -33,7 +33,12 @@ class Prompt extends Model
 
     public function prompt_segments()
     {
-        return $this->hasMany('App\Objects\PromptSegment')->orderBy('prompt_segment_order', 'asc');
+        return $this->hasMany('App\Objects\PromptSegment');
+    }
+
+    public function ordered_segments()
+    {
+        return $this->prompt_segments()->orderBy('prompt_segment_order', 'asc');
     }
 
     public function getSegmentOrderOptions($named = true)
@@ -43,7 +48,7 @@ class Prompt extends Model
         if ($count > 0) {
             $options = array_fill(1, $count, '');
             if (!$named) return $options;
-            foreach ($this->prompt_segments as $segment) {
+            foreach ($this->ordered_segments as $segment) {
                 $order = $segment->prompt_segment_order;
                 if (!array_key_exists($order, $options) || $options[$order] != '') {
                     foreach ($options as $key => $option) {

@@ -18,8 +18,8 @@ class SamplingOptions extends Migration
             Schema::create('sampling_options', function (Blueprint $table) {
                 $table->increments('id');
                 $table->unsignedInteger('sampling_question_id');
-                $table->string('state');
                 $table->string('question_text');
+                $table->string('state');
                 $table->string('option');
                 $table->boolean('correct');
                 $table->timestamps();

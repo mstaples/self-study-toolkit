@@ -1,5 +1,6 @@
 <?php
 
+use App\Objects\Knowledge;
 use Illuminate\Database\Seeder;
 
 class SamplingQuestionsTableSeeder extends Seeder
@@ -11,15 +12,15 @@ class SamplingQuestionsTableSeeder extends Seeder
      */
     public function run()
     {
-        // 'state', 'question_difficulty', 'question', 'answer_options'
-        // difficulties: 'vague', 'passing', 'familiar', 'deep'
+        // 'state', 'depth', 'question', 'answer_options'
+        // depths: 'vague', 'passing', 'familiar', 'deep'
         // options: 'sampling_question_id', 'question_text', 'option', 'correct', 'state'
         // seed path titles: "Circle of trust", "Hometown bias", "Stupendous Badass"
         $defaultQuestions = [
             0 => [
-                'path_title' => 'Circle of trust',
+                "knowledges" => [ "relationships", "teamwork", "introspection", "community"],
                 'state' => 'live',
-                'question_difficulty' => 'passing',
+                'depth' => 'passing',
                 'question' => "What's the biggest factor in building trust?",
                 'answer_options' => [
                     [
@@ -35,9 +36,9 @@ class SamplingQuestionsTableSeeder extends Seeder
                 ]
             ],
             1 => [
-                'path_title' => 'Circle of trust',
+                "knowledges" => [ "relationships", "teamwork", "introspection", "community"],
                 'state' => 'live',
-                'question_difficulty' => 'familiar',
+                'depth' => 'familiar',
                 'question' => "What behavior most benefits untrustworthy actors?",
                 'answer_options' => [[
                     'option' => 'Always giving the benefit of the doubt, regardless of previous actions.',
@@ -51,9 +52,9 @@ class SamplingQuestionsTableSeeder extends Seeder
                 ]]
             ],
             2 => [
-                'path_title' => 'Circle of trust',
+                "knowledges" => [ "relationships", "teamwork", "introspection", "community"],
                 'state' => 'live',
-                'question_difficulty' => 'vague',
+                'depth' => 'vague',
                 'question' => "When do untrustworthy actors have an advantage?",
                 'answer_options' => [[
                     'option' => 'On an initial interaction with no known history.',
@@ -67,9 +68,9 @@ class SamplingQuestionsTableSeeder extends Seeder
                 ]]
             ],
             3 => [
-                'path_title' => 'Circle of trust',
+                "knowledges" => [ "relationships", "teamwork", "introspection", "community"],
                 'state' => 'live',
-                'question_difficulty' => 'deep',
+                'depth' => 'deep',
                 'question' => 'Which two behaviors together build trustworthy community?',
                 'answer_options' => [[
                     'option' => 'Investing in long term relationships and giving benefit of the doubt -- or not -- based on others behavior.',
@@ -84,15 +85,14 @@ class SamplingQuestionsTableSeeder extends Seeder
             ]
         ];
         foreach ($defaultQuestions as $question) {
-            $path_id = DB::table('prompt_paths')->where('path_title', $question['path_title'])->first()->id;
             $id = DB::table('sampling_questions')->insertGetId([
-                'prompt_path_id' => $path_id,
                 'state' => $question['state'],
                 'question' => $question['question'],
-                'question_difficulty' => $question['question_difficulty'],
+                'depth' => $question['depth'],
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
+
             foreach ($question['answer_options'] as $option) {
                 DB::table('sampling_options')->insert([
                     'state' => $question['state'],
@@ -100,6 +100,28 @@ class SamplingQuestionsTableSeeder extends Seeder
                     'question_text' => $question['question'],
                     'option' => $option['option'],
                     'correct' => $option['correct'],
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
+            foreach ($question['knowledges'] as $knowledge) {
+                $know = DB::table('knowledges')
+                    ->select('id')
+                    ->where('name', $knowledge)
+                    ->first();
+                if (empty($know)) {
+                    $knowId = DB::table('knowledges')->insertGetId([
+                        'name' => $knowledge,
+                        'description' => '',
+                        'prerequisites' => false
+                    ]);
+                } else {
+                    $knowId = $know->id;
+                }
+
+                DB::table('knowledges_questions')->insert([
+                    'question_id' => $id,
+                    'knowledge_id' => $knowId,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);

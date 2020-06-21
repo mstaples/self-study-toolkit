@@ -10,9 +10,9 @@
 
 @section('sidebar')
     <section class="box">
-        <h2>{{ Form::label('question_difficulty', 'Question difficulty') }}</h2>
-        <p>A question's difficulty reflects how strong a grasp on the path's thesis concepts or skills someone likely has if they know the answer.</p>
-        {{ Form::select('question_difficulty', $difficulties) }}
+        <h2>{{ Form::label('depth', 'Question depth') }}</h2>
+        <p>A question's depth reflects how strong a grasp on the path's thesis concepts or skills someone likely has if they know the answer.</p>
+        {{ Form::select('depth', $depths) }}
         <br/>
         <button type="submit" form="new-question" value="Submit" class="btn btn-success fa-pull-right">
             Create

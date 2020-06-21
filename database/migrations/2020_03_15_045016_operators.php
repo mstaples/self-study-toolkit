@@ -16,12 +16,14 @@ class Operators extends Migration
         // Create the "operators" table
         Schema::create('operators', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('journey_id')->nullable();
             $table->string('slack_user_id');
             $table->string('name');
             $table->string('nickname')->nullable();
+            $table->string('frequency')->nullable();
+            $table->string('count');
             $table->boolean('opt_in')->nullable();
             $table->json('journey_state')->nullable();
+            $table->json('preferences')->nullable();
             $table->timestamps();
         });
     }

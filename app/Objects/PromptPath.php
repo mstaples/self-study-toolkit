@@ -11,24 +11,12 @@ class PromptPath extends Model
     use PathTrait;
     use SoftDeletes;
 
-    protected $fillable = [ 'state', 'path_difficulty', 'path_category', 'path_title', 'steps', 'tags', 'repeatable', 'path_thesis', 'created_by' ];
+    protected $fillable = [ 'state', 'path_level', 'path_category', 'path_title', 'steps','repeatable', 'path_thesis', 'created_by' ];
     //
     protected $attributes = [
         'state' => 'review',
         'steps' => 0
     ];
-
-    protected $cast = [
-        'tags' => 'array'
-    ];
-
-    public function setTags($tags)
-    {
-        if (is_array($tags)) {
-            $tags = json_encode($tags, true);
-        }
-        $this->tags = $tags;
-    }
 
     public function category()
     {
@@ -52,14 +40,25 @@ class PromptPath extends Model
         return $this->hasMany('App\Objects\Prompt');
     }
 
-    public function sampling_questions()
+    public function knowledges()
     {
-        return $this->hasMany('App\Objects\SamplingQuestion');
+        return $this->belongsToMany('App\Objects\Knowledge', 'knowledges_paths', 'path_id', 'knowledge_id');
     }
 
-    public function hasTag($tag)
+    public function getKnowledgeNames()
     {
-        return in_array($tag, json_decode($this->tags, true));
+        $knowledges = $this->knowledges;
+        $names = [];
+        foreach ($knowledges as $knowledge) {
+            $names[$knowledge->name] = $knowledge->name;
+        }
+        return $names;
+    }
+
+    public function hasKnowledge($name)
+    {
+        $has = $this->knowledges()->where('name',$name)->first();
+        return empty($has) ? false : true;
     }
 
     public function hasAccess(User $user)

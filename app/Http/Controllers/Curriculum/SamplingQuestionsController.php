@@ -57,24 +57,21 @@ class SamplingQuestionsController extends AdminBaseController
         ]);
     }
 
-    public function postSamplingQuestions(Request $request, $pathId)
+    public function postSamplingQuestions(Request $request)
     {
-        $title = $this->path->path_title;
+        $title ="Sampling Question";
         if ($request->input('question') == 'new') {
             $question = new SamplingQuestion();
             return $this->adminView('curriculum/question/new', [
-                'title' => $title . ': New sampling question',
-                'difficulties' => $question->getDifficulties(),
-                'pathId' => $pathId
+                'title' => 'New sampling question',
+                'depths' => $question->getDepths()
             ]);
         }
         try {
-            $question = $this->path->sampling_questions()
-                ->where('id', $request->input('question'))
-                ->firstOrFail();
+            $question = SamplingQuestion::findOrFail('id', $request->input('question'));
         } catch (\Exception $e) {
             $this->message = "Couldn't locate the requested sampling question.";
-            return $this->getSamplingQuestions($request, $pathId);
+            return $this->getSamplingQuestions($request);
         }
         return $this->adminView('curriculum/question/edit', [
             'title' => $title . ': Edit sampling question',
@@ -82,34 +79,30 @@ class SamplingQuestionsController extends AdminBaseController
         ]);
     }
 
-    public function createSamplingQuestion(Request $request, $pathId)
+    public function createSamplingQuestion(Request $request)
     {
-        $path = PromptPath::find($pathId);
-        $check = $path->sampling_questions()->where('question', $request->input('question'))->first();
+        $check = SamplingQuestion::where('question', $request->input('question'))->first();
         if ($check) {
-            $this->message = "This path already has a sampling question reading: ".$request->input('question');
+            $this->message = "This sampling question already exists.";
             $question = new SamplingQuestion();
-            $difficulties = $question->getDifficulties();
+            $depths = $question->getDepths();
             return $this->adminView('curriculum/question/new', [
-                'pathId' => $pathId,
-                'title' => $path->path_title . ": New Sampling Question",
-                'difficulties' => $difficulties,
+                'title' => "New Sampling Question",
+                'depth' => $depths,
                 'nav' => 'questions'
             ]);
         }
         $newQuestion = [
             'question' => $request->input('question'),
-            'question_difficulty' => $request->input('question_difficulty')
+            'depth' => $request->input('depth')
         ];
         $question = new SamplingQuestion($newQuestion);
-        $path->sampling_questions()->save($question);
         $question->save();
 
-        $title = $path->path_title . " Sampling Question";
+        $title = "Sampling Question";
         return $this->adminView('curriculum/question/edit', [
             'question' => $question,
             'title' => $title,
-            'pathId' => $pathId,
             'nav' => 'questions'
         ]);
     }
@@ -119,13 +112,13 @@ class SamplingQuestionsController extends AdminBaseController
         Log::debug(__METHOD__.": ".__LINE__);
         $question = SamplingQuestion::find($questionId);
         $question->question = $request->input('question');
-        $question->question_difficulty = $request->input('question_difficulty');
-        $title = $this->path->path_title . " Sampling Question";
-    $this->message = "Question saved.";
+        $question->depth = $request->input('depth');
+        $question->save();
+
+        $this->message = "Question saved.";
         return $this->adminView('curriculum/question/edit', [
             'question' => $question,
-            'title' => $title,
-            'pathId' => $pathId,
+            'question_id' => $questionId,
             'nav' => 'questions'
         ]);
     }

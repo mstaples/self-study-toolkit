@@ -50,19 +50,42 @@ class PromptPathsTableSeeder extends Seeder
             $newPath = PromptPath::create([
                 'state' => 'live',
                 'steps' => count($path['prompts']),
-                'tags' => json_encode($path['tags']),
                 'path_title' => $path['path_title'],
-                'path_difficulty' => $path['path_difficulty'],
+                'path_level' => $path['path_level'],
                 'path_thesis' => $path['path_thesis'],
                 'path_category' => $path['path_category'],
                 'path_category_id' => $category->id
             ]);
+
+            foreach ($path['knowledges'] as $knowledge) {
+                $know = DB::table('knowledges')
+                    ->select('id')
+                    ->where('name', $knowledge)
+                    ->first();
+                if (empty($know)) {
+                    $knowId = DB::table('knowledges')->insertGetId([
+                        'name' => $knowledge,
+                        'description' => '',
+                        'prerequisites' => false
+                    ]);
+                } else {
+                    $knowId = $know->id;
+                }
+
+                DB::table('knowledges_paths')->insert([
+                    'path_id' => $newPath->id,
+                    'knowledge_id' => $knowId,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
             foreach ($path['prompts'] as $step => $prompt) {
                 $create = Prompt::create([
                     'prompt_path_step' => $step,
                     'prompt_path_id' => $newPath->id,
                     'prompt_title' => $prompt['prompt_title'],
-                    'repeatable' => $prompt['repeatable']
+                    'repeatable' => $prompt['repeatable'],
+                    'optional' => $prompt['optional']
                 ]);
                 $this->getPromptSegments($prompt['prompt_segments'], $create);
             }

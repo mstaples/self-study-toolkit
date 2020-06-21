@@ -21,11 +21,13 @@
         @endif>
         <a href="{{ url('curriculum/questions/'.$pathId ?? '') }}">Questions</a>
     </li>
-        <li @if($nav == 'editors')
-        class="current"
-        @endif>
-        <a href="{{ url('curriculum/editors/'.$pathId ?? '') }}">Editors</a>
-    </li>
+        @if($pathId)
+            <li @if($nav == 'editors')
+            class="current"
+            @endif>
+            <a href="{{ url('curriculum/editors/'.$pathId) }}">Editors</a>
+            </li>
+        @endif
     @else
         <li @if(\Request::is('login'))class="current"@endif><a href="{{ route('login') }}">Login</a></li>
         <li @if(\Request::is('register'))class="current"@endif><a href="{{ route('register') }}">Register</a></li>

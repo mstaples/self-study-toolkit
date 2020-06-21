@@ -9,14 +9,17 @@
 
         @section('sidebar')
             <section class="box">
-                {{ Form::label('path_difficulty', 'Path difficulty: '.ucfirst($path->path_difficulty)) }}
+                {{ Form::label('path_level', 'Path level: '.ucfirst($path->path_level)) }}
                 <br/>
                 {{ Form::label('path_category', 'Path category: '.$path->category->name) }}
                 <br/>
-                {{ Form::label('existing_tags', 'Tags:') }}<br/>
-                @foreach ($path->getTags() as $tag)
-                    {{ Form::label('tag_'.$tag, $tag) }}<br/>
-                @endforeach
+                {{ Form::label('existing_knowledges', 'Topics:') }}<br/>
+                <ul>
+                    @foreach ($knowledges as $knowledge)
+                        <li>{{ $knowledge }}</li>
+                    @endforeach
+                </ul>
+                <small>*topics with prerequisites are all student level or above</small>
                 <br/>
                 {{ Form::submit('Continue to prompts') }}
             </section>

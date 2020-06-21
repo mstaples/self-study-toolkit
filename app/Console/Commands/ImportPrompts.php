@@ -105,20 +105,19 @@ class ImportPrompts extends Command
             var_dump($promptInfo);
             break;
             // Print columns A and E, which correspond to indices 0 and 4.
-            $this->info("adding $title ($categoryName: $difficulty)\n");
+            $this->info("adding $title ($categoryName: $level)\n");
 
             $category = PathCategory::where('name', $categoryName)->first();
             $steps = $category->max * $category->span;
-            $tags = explode(',', $tags);
+            $knowledges = explode(',', $knowledges);
 
             $newPath = PromptPath::firstOrNew([
                 'path_title' => $title,
                 'path_category' => $categoryName,
-                'path_difficulty' => $difficulty
+                'path_level' => $level
             ]);
 
             $newPath->path_thesis = $thesis;
-            $newPath->tags = json_encode($tags);
             $newPath->steps = $steps;
             $newPath->category()->associate($category);
             $newPath->save();

@@ -88,7 +88,7 @@ class PromptsController extends AdminBaseController
         $prompt = Prompt::find($promptId);
         Log::debug("postPrompt called with prompt id $promptId");
         $title = $path->path_title . " Prompt: ". $prompt->prompt_title;
-        $segments = $prompt->prompt_segments;
+        $segments = $prompt->ordered_segments;
         return $this->adminView('curriculum/prompt/edit', [
             'path' => $path,
             'title' => $title,
@@ -111,8 +111,10 @@ class PromptsController extends AdminBaseController
         }
 
         $repeatable = $request->input('repeatable') == 'true' ? true : false;
+        $optional = $request->input('optional') == 'true' ? true : false;
         $prompt->prompt_title = $request->input('prompt_title');
         $prompt->repeatable = $repeatable;
+        $prompt->optional = $optional;
         $prompt->save();
         if ($request->input('next') != 'add') {
             return redirect()->action('Curriculum\SamplingQuestionsController@getSamplingQuestions', [
@@ -126,7 +128,7 @@ class PromptsController extends AdminBaseController
             'path' => $path,
             'title' => $title,
             'prompt' => $prompt,
-            'segments' => $prompt->prompt_segments,
+            'segments' => $prompt->ordered_segments,
             'nav' => 'segments'
         ]);
     }
@@ -145,9 +147,11 @@ class PromptsController extends AdminBaseController
             ]);
         }
         $repeatable = $request->input('repeatable') == 'true' ? true : false;
+        $optional = $request->input('optional') == 'true' ? true : false;
         $newPrompt = [
             'prompt_title' => $request->input('prompt_title'),
-            'repeatable' => $repeatable
+            'repeatable' => $repeatable,
+            'optional' => $optional
         ];
         $prompt = new Prompt($newPrompt);
         $path->prompts()->save($prompt);
@@ -160,7 +164,7 @@ class PromptsController extends AdminBaseController
                 'path' => $path,
                 'title' => $title,
                 'prompt' => $prompt,
-                'segments' => $prompt->prompt_segments,
+                'segments' => $prompt->ordered_segments,
                 'nav' => 'segments'
             ]);
         }

@@ -10,23 +10,23 @@
 
 @section('sidebar')
     <section class="box">
-        <h3>Difficulty</h3>
-        <p>The difficulty of a path should helper learners find paths that make the most sense for both their existing knowledge and their available energy.</p>
-        {{ Form::label('path_difficulty', 'Path difficulty:') }}
-        {{ Form::select('path_difficulty', $difficulties) }}
+        <h3>Level</h3>
+        <p>The level of a path should helper learners find paths that make the most sense for both their existing knowledge and their available energy.</p>
+        {{ Form::label('path_level', 'Path level:') }}
+        {{ Form::select('path_level', $depths) }}
         <h3>Category</h3>
         <p>Path categories help learners figure out which paths to focus on based on their current priorities and concerns.</p>
         {{ Form::label('path_category', 'Path category:') }}
         {{ Form::select('path_category', $path->getCategories()) }}
         <h3>Tags</h3>
         <p>Tags are currently broken.</p>
-        {{ Form::label('existing_tags', 'Existing tags:') }}<br/>
-        @foreach ($path->getTags() as $tag)
-            {{ Form::checkbox('existing_tags', $tag) }}
-            {{ Form::label('existing_tags', $tag) }}<br/>
+        {{ Form::label('existing_knowledges', 'Existing topics:') }}<br/>
+        @foreach ($knowledges as $knowledge)
+            {{ Form::checkbox('existing_knowledges', $knowledge) }}
+            {{ Form::label('existing_knowledges', $knowledge) }}<br/>
         @endforeach
-        {{ Form::label('new_tags', 'New tags:') }}<br/>
-        {{ Form::text('new_tags') }}<br/>
+        {{ Form::label('new_knowledges', 'New topics:') }}<br/>
+        {{ Form::text('new_knowledges') }}<br/>
         {{ Form::submit('Continue to prompts') }}
     </section>
 @endsection

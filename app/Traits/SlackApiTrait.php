@@ -62,7 +62,7 @@ trait SlackApiTrait
     protected function firstSampling($user_id)
     {
         $questions = SamplingQuestion::where('state', 'live')
-            ->whereIn('question_difficulty', [ 'vague' ])
+            ->whereIn('depth', [ 'vague' ])
             ->first();
         return $this->createSamplingQuestionView($questions, $user_id, 1);
     }
@@ -145,7 +145,7 @@ trait SlackApiTrait
     public function createSamplingBlock(SamplingQuestion $question, $count)
     {
         Log::debug("createSamplingBlock: ".$question->question);
-        // sampling question: 'state', 'question_difficulty', 'question', 'answer_options'
+        // sampling question: 'state', 'depth', 'question', 'answer_options'
         // sampling options: 'sampling_question_id', 'question_text', 'option', 'correct', 'state'
         $options = $question->sampling_options;
         $accessoryOptions = [];

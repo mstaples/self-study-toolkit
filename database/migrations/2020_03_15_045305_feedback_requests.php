@@ -17,12 +17,18 @@ class FeedbackRequests extends Migration
         if (!Schema::hasTable('feedback_requests')) {
             Schema::create('feedback_requests', function (Blueprint $table) {
                 $table->increments('id');
+                $table->unsignedInteger('created_by_id')->nullable();
                 $table->string('state');
-                $table->string('request')->unique();
-                $table->string('request_type');
+                $table->string('request');
+                $table->string('request_type'); // primary, secondary, tertiary
+                $table->string('signal_strength');
                 $table->json('answer_options')->nullable();
-                $table->json('tags');
                 $table->timestamps();
+                $table->softDeletes();
+
+                $table->foreign('created_by_id')
+                    ->references('id')->on('users')
+                    ->onDelete('set null');
             });
         }
     }

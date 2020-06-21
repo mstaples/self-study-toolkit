@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Curriculum;
 
 use App\Http\Controllers\AdminBaseController;
+use App\Objects\Knowledge;
 use App\Objects\PathCategory;
 use App\Objects\PromptPath;
 use App\Objects\PromptSegment;
@@ -50,6 +51,7 @@ class PathsController extends AdminBaseController
             $title = "New Path";
             $path = new PromptPath();
             $view = 'new';
+            $knowledges = $path->allKnowledges();
         } else {
             try {
                 $path = $user->prompt_paths()->where('prompt_path_id', $pathId)->firstOrFail();
@@ -61,14 +63,21 @@ class PathsController extends AdminBaseController
                 $write = false;
             }
             $title = $path->path_title;
-            $view = $write ? 'edit' : 'view';
+            if ($write) {
+                $view = 'edit';
+                $knowledges = $path->allKnowledges(false, true);
+            } else {
+                $view = 'view';
+                $knowledges = $path->pathKnowledges();
+            }
         }
-        $difficulties = array_keys($path->getDifficulties());
-        $difficulties = array_combine($difficulties, $difficulties);
+        $levels = array_keys($path->getLevels());
+        $levels = array_combine($levels, $levels);
         return $this->adminView('curriculum/path/'.$view, [
             'path' => $path,
             'title' => $title,
-            'difficulties' => $difficulties
+            'levels' => $levels,
+            'knowledges' => $knowledges
         ]);
     }
 
@@ -102,22 +111,25 @@ class PathsController extends AdminBaseController
         $path->path_title = $request->input('path_title');
         $path->path_category = $category->name;
         $path->path_thesis = $request->input('path_thesis');
-        $path->path_difficulty = $request->input('path_difficulty');
+        $path->path_level = $request->input('path_level');
         $path->path_title = $request->input('path_title');
 
         $create = $request->input();
-        $tags = [];
+        $knowledges = [];
         foreach ($create as $label => $input) {
-            if (strpos($label, 'tag_') !== false) {
-                $tags[] = $input;
+            if (strpos($label, 'knowledge_') !== false) {
+                $knowledges[] = $input;
             }
-            if ($label == 'new_tags') {
-                $tags = array_unique(array_merge($tags, explode(',', $input)));
+            if ($label == 'new_knowledges') {
+                $knowledges = array_unique(array_merge($knowledges, explode(',', $input)));
             }
         }
-        $path->setTags($tags);
         $path->save();
         $path->editors()->attach($user, ['write_access' => true]);
+        foreach ($knowledges as $knowledge) {
+            $know = Knowledge::firstOrNew(['name' => strtolower($knowledge)]);
+            $path->knowledges()->attach($know);
+        }
 
         return redirect()->action('Curriculum\PromptsController@getPrompts', [
             'pathId' => $path->id

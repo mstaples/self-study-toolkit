@@ -6,7 +6,7 @@ use App\Objects\PathCategory;
 use App\Traits\PathTrait;
 use Illuminate\Console\Command;
 
-class AddPathCategory extends Command
+class AddPromptCategory extends Command
 {
     use PathTrait;
     /**
@@ -73,5 +73,6 @@ class AddPathCategory extends Command
         $create->save();
 
         $this->info("New prompt category -- $name -- created!");
+        return;
     }
 }

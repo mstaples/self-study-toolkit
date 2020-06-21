@@ -19,11 +19,10 @@ class PromptSegment extends Model
         'key' => []
     ];
     public $elements = [];
-    public $key = [];
 
     protected $fillable = [
         'segment_title', 'segment_text', 'segment_type', 'segment_imageUrl', 'segment_url',
-        'segment_accessory', 'segment_elements', 'segment_key', 'prompt_segment_order' ];
+        'segment_accessory', 'segment_elements', 'prompt_segment_order' ];
     protected $casts = [ 'segment_accessory' => 'array', 'segment_elements' => 'array', 'segment_key' => 'array' ];
     protected $attributes = [ 'segment_type' => 'section', 'prompt_segment_order' => 1 ];
 
@@ -36,11 +35,6 @@ class PromptSegment extends Model
     public function prompt()
     {
         return $this->belongsTo('App\Objects\Prompt');
-    }
-
-    public function createKey()
-    {
-
     }
 
     public function getAccessory()
@@ -94,7 +88,7 @@ class PromptSegment extends Model
             Log::debug(__CLASS__.__METHOD__." provided invalid order option = $order");
             return false;
         }
-        $segments = $this->prompt->prompt_segments;
+        $segments = $this->prompt->ordered_segments;
         foreach ($segments as $segment) {
             if ($segment->id == $this->id) {
                 $segment->prompt_segment_order = $order;
@@ -139,7 +133,7 @@ class PromptSegment extends Model
             case 'radio_buttons':
                 $accessory['options'] = [];
                 foreach ($options as $option=>$key) {
-                    $this->key[$option] = $key;
+                    $accessory['key'][$option] = $key;
                     $accessory['options'][] = [
                         'value' => $option,
                         'text' => [

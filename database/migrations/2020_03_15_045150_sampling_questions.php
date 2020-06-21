@@ -17,16 +17,10 @@ class SamplingQuestions extends Migration
         if (!Schema::hasTable('sampling_questions')) {
             Schema::create('sampling_questions', function (Blueprint $table) {
                 $table->increments('id');
-                $table->unsignedInteger('prompt_path_id');
                 $table->string('state');
-                $table->string('question_difficulty');
+                $table->string('depth');
                 $table->text('question');
-                $table->json('answer_options')->nullable();
                 $table->timestamps();
-
-                $table->foreign('prompt_path_id')
-                    ->references('id')->on('prompt_paths')
-                    ->onDelete('cascade');
             });
         }
     }
