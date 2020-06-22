@@ -30,4 +30,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'slack' => [
+        'bot_token' => env('BOT_TOKEN'),
+        'user_id' => env('USER_ID'),
+        'url' => env('SLACK_URL'),
+        'save_id' => env('SLACK_SAVE_USER_BLOCK_ID')
+    ]
+
 ];

@@ -11,7 +11,8 @@ class Travel extends Model
 {
     use PathTrait;
     use KnowledgableTrait;
-    use SoftDeletes;
+
+    protected $table = 'travels';
 
     protected $fillable = [ 'operator_id', 'path_id', 'completed', 'completed_on', 'level', 'notebook' ];
     //

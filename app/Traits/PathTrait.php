@@ -87,28 +87,4 @@ trait PathTrait
         }
         return $topics;
     }
-
-    /*
-     * returns [ id => name ] when markPathKnowledges = false
-     * returns [ name => boolean ] when markPathKnowledges = true
-     * */
-    public function allKnowledges($markPrerequisites = true, $markPathKnowledges = false)
-    {
-        $all = Knowledge::all();
-        $topics = [];
-        foreach ($all as $each) {
-            $name = $each->name;
-            if ($markPrerequisites && $each->prerequisites) {
-                $name = $name . "*";
-            }
-            if ($markPathKnowledges) {
-                $topics[$each->name] = true;
-                $has = $this->knowledges()->where('name', $each->name)->first();
-                if (empty($has)) $topics[$each->name] = false;
-                continue;
-            }
-            $topics[$each->id] = $name;
-        }
-        return $topics;
-    }
 }

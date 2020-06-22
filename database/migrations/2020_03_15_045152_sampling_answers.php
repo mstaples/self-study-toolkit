@@ -19,7 +19,7 @@ class SamplingAnswers extends Migration
                 $table->increments('id');
                 $table->integer('operator_id')->unsigned();
                 $table->integer('sampling_question_id');
-                $table->string('sampling_question');
+                $table->string('question_text');
                 $table->string('answer');
                 $table->string('depth');
                 $table->boolean('correct')->nullable();

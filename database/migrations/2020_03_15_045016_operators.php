@@ -20,7 +20,6 @@ class Operators extends Migration
             $table->string('name');
             $table->string('nickname')->nullable();
             $table->string('frequency')->nullable();
-            $table->string('count');
             $table->boolean('opt_in')->nullable();
             $table->json('journey_state')->nullable();
             $table->json('preferences')->nullable();

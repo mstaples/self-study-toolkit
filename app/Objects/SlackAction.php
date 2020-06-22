@@ -30,14 +30,27 @@ class SlackAction extends Model
 
     public function buildAction($slackAction)
     {
+        //Log::debug($slackAction);
         $this->type = $slackAction['type'];
-        $this->block_id = $slackAction['block_id'];
+        if (array_key_exists('block_id', $slackAction)) {
+            $this->block_id = $slackAction['block_id'];
+        } else {
+            $this->block_id = $slackAction['action_id'];
+        }
         switch($this->type) {
             case 'radio_buttons':
                 $this->value = $slackAction['selected_option']['value'];
             break;
+            case 'checkboxes':
+                $selected = $slackAction['selected_options'];
+                Log::debug($selected);
+                $this->value = [];
+                foreach ($selected as $selection) {
+                    $this->value[] = $selection['value'];
+                }
+            break;
             default;
-                $this->valud = $slackAction['value'];
+                $this->value = $slackAction['value'];
             break;
         }
         return;
@@ -55,15 +68,9 @@ class SlackAction extends Model
         return $components[1];
     }
 
-    public function getCount()
-    {
-        $components = explode('.',$this->block_id);
-        return $components[2];
-    }
-
     public function getAssociatedId($type=null)
     {
-        if ($this->block_id == getenv('SLACK_SAVE_USER_BLOCK_ID')) {
+        if ($this->block_id == config('services.slack.save_id')) {
             return null;
         }
         $components = explode('.',$this->block_id);
@@ -78,6 +85,7 @@ class SlackAction extends Model
 
     public function takeAction(Operator $operator)
     {
+        Log::debug(__METHOD__.': '.$this->getType());
         switch($this->getType()) {
             case 'sampling_question':
                 $samplingQuestionId = $this->getId();
@@ -85,14 +93,15 @@ class SlackAction extends Model
                 $option = SamplingOption::find($this->value);
 
                 $action = new SamplingAnswer();
-                $action->operator()->associate($operator);
                 $action->sampling_question_id = $samplingQuestionId;
-                $action->sampling_question = $question->question;
+                $action->question_text = $question->question;
                 $action->answer = $option->option;
                 $action->correct = $option->correct;
+                $action->depth = $question->depth;
+                $action->operator()->associate($operator);
                 $action->save();
 
-                return $this->getCount() + 1;
+                return $operator->needsAQuestion();
                 break;
             case 'prompt':
                 $promptId = $this->getAssociatedId('prompt');
@@ -114,7 +123,18 @@ class SlackAction extends Model
                 $action->record = $this->value;
                 $action->save();
                 break;
+            case 'preferences':
+                if ($this->value == 'save') {
+                    return false;
+                }
+                Log::debug(__METHOD__.': set preferences : '.$this->getId());
+                Log::debug($this->value);
+                $operator->preferences[$this->getId()] = $this->value;
+                $operator->save();
+
+                return false;
+                break;
         }
-        return;
+        return false;
     }
 }

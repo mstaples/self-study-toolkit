@@ -72,7 +72,8 @@ class AddQuestion extends Command
             $new = new SamplingAnswer();
             $new->answer = $option;
             $new->correct = $correct;
-            $new->state = 'live';
+            $new->depth = $question->depth;
+            $new->sampling_question = $question->question;
             $new->save();
 
             $question->question_options()->associate($new);

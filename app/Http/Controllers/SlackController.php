@@ -16,33 +16,27 @@ class SlackController extends Controller
     {
         $body = $request->toArray();
         $body = json_decode($body['payload'], true);
-
         $user = $body['user'];
-        $operator = Operator::where('slack_user_id', $user['id'])->first();
-
+        $operator = $this->retrieveOperator($user);
         $type = $body['type'];
         switch($type) {
             case 'block_actions':
                 $actions = $body['actions'];
-                if (empty($operator) && $actions[0]['block_id'] != getenv('SLACK_SAVE_USER_BLOCK_ID')) {
-                    Log::debug('SlackController:actions no operator, no agreement, return default');
+                if (!$operator->opt_in && $actions[0]['block_id'] != config('services.slack.save_id')) {
+                    Log::debug('SlackController:actions no opt in agreement found, return default');
+                    $this->setDefaultHomeTab();
                     $json = $this->defaultView;
-                } elseif (empty($operator) && $actions[0]['block_id'] == getenv('SLACK_SAVE_USER_BLOCK_ID')) {
-                    Log::debug('SlackController:actions no operator, found agreement, make new operator, send first sampling');
-                    $operator = new Operator();
-                    $operator->slack_user_id = $user['id'];
-                    $operator->name = $user['name'];
-                    $operator->opt_in = true;
-                    $operator->save();
-                    $json = $this->firstSampling($operator->slack_user_id);
-                } elseif ($actions[0]['block_id'] == getenv('SLACK_SAVE_USER_BLOCK_ID')) {
-                    Log::debug('SlackController:actions operator found, record agreement, send first sampling');
+                } elseif ($actions[0]['block_id'] == config('services.slack.save_id')) {
+                    Log::debug('SlackController:actions new opt in agreement made, send first sampling');
                     $operator->opt_in = true;
                     $operator->save();
                     $json = $this->firstSampling($operator->slack_user_id);
                 } else {
                     Log::debug('SlackController:actions operator found, parse actions');
-                    $json = $this->parseAction($operator, $actions);
+                    foreach ($actions as $action) {
+                        Log::debug($action);
+                        $json = $this->parseAction($operator, $action);
+                    }
                 }
                 break;
             case 'shortcut':
@@ -56,7 +50,7 @@ class SlackController extends Controller
         }
 
         Log::debug("update:slack-home");
-        Log::debug($json);
+        //Log::debug($json);
         $exitCode = Artisan::call('update:slack-home', [
             'json' => $json
         ]);

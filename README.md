@@ -93,8 +93,6 @@ Please, do all development in a separate branch named for a specific development
 Be sure to pull down and integrate changes from the master branch before making new commits.
 
 ### TODO
-
-- Available Paths menu based on Sampling evaluation
 - Prompt delivery
 - Feedback request delivery
 - Feedback record

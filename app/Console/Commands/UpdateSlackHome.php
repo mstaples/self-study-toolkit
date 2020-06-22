@@ -45,13 +45,12 @@ class UpdateSlackHome extends Command
      */
     public function handle()
     {
-        $this->setDefaultHomeTab();
-        $json = $this->argument('json') === null ? $this->defaultView : $this->argument('json');
-        $json['user_id'] = getenv('USER_ID');
-        Log::debug('UpdateSlackHome json keys? '. implode(', ', array_keys($json)));
+        $json = $this->argument('json') === null ? $this->defaultHome() : $this->argument('json');
+        $json['user_id'] = config('services.slack.user_id');
+        //Log::debug('UpdateSlackHome json keys? '. implode(', ', array_keys($json)));
         Log::debug($json);
         $headers =  [
-            'Authorization' => 'Bearer ' . getenv('BOT_TOKEN'),
+            'Authorization' => 'Bearer ' . config('services.slack.bot_token'),
             'Content-type'      => 'application/json; charset=utf-8'
         ];
 
@@ -59,8 +58,8 @@ class UpdateSlackHome extends Command
             'headers' => $headers,
             'json' => $json
         ];
-
-        $url = getenv('SLACK_URL').'/views.publish';
+        //Log::debug($json);
+        $url = config('services.slack.url').'/views.publish';
 
         $this->info('Updating Slack app Home: '.$url);
         try {
@@ -70,6 +69,7 @@ class UpdateSlackHome extends Command
             if (!array_key_exists('response_metadata',$response)
                 || !array_key_exists('messages',$response['response_metadata'])) {
                 var_dump($response);
+                //Log::debug($response);
                 return;
             }
             foreach ($response['response_metadata']['messages'] as $message) {

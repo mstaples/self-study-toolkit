@@ -14,7 +14,7 @@ class Learning extends Model
         'feedback_received' => 0,
         'questions_answered' => 0,
         'depth' => 'vague',
-        'last_evaluation_level' => 'basic'
+        'level' => 'basic'
     ];
 
     public function knowledge()
