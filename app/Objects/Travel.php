@@ -2,6 +2,7 @@
 
 namespace App\Objects;
 
+use App\Traits\KnowledgableTrait;
 use App\Traits\PathTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Travel extends Model
 {
     use PathTrait;
+    use KnowledgableTrait;
     use SoftDeletes;
 
     protected $fillable = [ 'operator_id', 'path_id', 'completed', 'completed_on', 'level', 'notebook' ];
@@ -30,12 +32,5 @@ class Travel extends Model
     public function learnings()
     {
         return $this->belongsToMany('App\Objects\Learnings');
-    }
-
-    public function hasKnowledge($name)
-    {
-        $has = $this->prompt_path->knowledges()->where('name', $name)->first();
-
-        return empty($has) ? false : true;
     }
 }

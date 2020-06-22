@@ -11,23 +11,16 @@
         @endif>
         <a href="{{ url('/curriculum/prompts/'.$pathId ?? '') }}">Prompts</a>
     </li>
-        <li @if($nav == 'segments')
-        class="current"
-        @endif>
-        <a href="{{ url('curriculum/prompts/'.$promptId ?? '') }}">Segments</a>
-    </li>
         <li @if($nav == 'questions')
         class="current"
         @endif>
-        <a href="{{ url('curriculum/questions/'.$pathId ?? '') }}">Questions</a>
+        <a href="{{ url('curriculum/questions/'.$questionId ?? 'knowledge') }}">Questions</a>
     </li>
-        @if($pathId)
-            <li @if($nav == 'editors')
+        <li @if($nav == 'knowledges')
             class="current"
             @endif>
-            <a href="{{ url('curriculum/editors/'.$pathId) }}">Editors</a>
-            </li>
-        @endif
+            <a href="{{ url('curriculum/knowledges/') }}">Knowledges</a>
+        </li>
     @else
         <li @if(\Request::is('login'))class="current"@endif><a href="{{ route('login') }}">Login</a></li>
         <li @if(\Request::is('register'))class="current"@endif><a href="{{ route('register') }}">Register</a></li>

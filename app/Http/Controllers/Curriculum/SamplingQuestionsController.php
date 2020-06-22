@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Curriculum;
 
 use App\Http\Controllers\AdminBaseController;
+use App\Objects\Knowledge;
 use App\Objects\PathCategory;
 use App\Objects\Prompt;
 use App\Objects\PromptPath;
@@ -27,32 +28,88 @@ class SamplingQuestionsController extends AdminBaseController
          * Also pull request info into the class that would otherwise be duplicated in each action
          * */
         $this->middleware(function ($request, $next) {
-            $this->pathId = (int) $request->route('pathId');
-            $this->path = PromptPath::find($this->pathId);
-            //Log::debug(__CLASS__.': Path: '.$this->path->path_title);
-            if (!$this->path->hasAccess(Auth::user())) {
-                $this->message = "Current user doesn't have edit access to the selected path.";
-                //Log::debug($this->message);
-                return redirect('prompts/view/'.$this->pathId);
+            $user = Auth::user();
+            $destination = $request->url();
+            if (strpos($destination, '/questions/view/') === false) {
+                $parameters = $request->route()->parameters();
+                if (array_key_exists('questionId', $parameters)) {
+                    $this->questionId = $request->route('questionId');
+                    $question = SamplingQuestion::find($this->questionId);
+                    if (!empty($question) && !$question->hasAccess($user)) {
+                        $this->message = "Current user doesn't have edit access to the selected Question.";
+                        return $this->getPrompts();
+                    }
+                }
             }
             $this->nav = 'questions';
-            if (strpos($request->url, 'edit') !== false) {
-                return $next($request, $this->pathId, $request->route('questionId'));
-            }
-            return $next($request, $this->pathId);
+            return $next($request);
         });
     }
 
-    public function getSamplingQuestions(Request $request, $pathId)
+    public function createKnowledge(Request $request)
     {
-        $questions = $this->path->sampling_questions;
-        foreach ($questions as $question) {
-            $options[$question->id] = $question->question;
+        $check = Knowledge::where('name', $request->input('name'))->first();
+        if ($check) {
+            $this->message = "This knowledge already exists.";
+            return $this->adminView('curriculum/knowledge/new', [
+                'title' => "New Knowledge",
+                'nav' => 'knowledges'
+            ]);
         }
-        $options['new'] = 'Create a new sampling question';
-        return $this->adminView('curriculum/question/index', [
+        $newKnowledge = [
+            'name' => $request->input('question'),
+            'description' => $request->input('depth'),
+            'prerequisite' => false
+        ];
+        $knowledge = new Knowledge($newKnowledge);
+        $knowledge->save();
+
+        return $this->getSamplingQuestions($request, $knowledge->name);
+    }
+
+    public function getKnowledges(Request $request)
+    {
+        $knowledges = Knowledge::all();
+        $options = [];
+
+        foreach ($knowledges as $knowledge)
+        {
+            $options[$knowledge->id] = $knowledge->name;
+        }
+        $options['new'] = "Create a new knowledge";
+        return $this->adminView('curriculum/knowledge/index', [
             'options' => $options,
-            'title' => 'Sampling Questions',
+            'title' => 'Knowledges',
+            'nav' => 'questions'
+        ]);
+    }
+
+    public function postKnowledges(Request $request)
+    {
+        $knowledge = $request->input('knowledge');
+        if (!$knowledge) return $this->getKnowledges($request);
+
+        if ($knowledge == 'new') {
+            return $this->createKnowledge($request);
+        }
+
+        Log::debug("postKnowledges()->input $knowledge");
+        $knowledge = Knowledge::find($knowledge);
+        return $this->getSamplingQuestions($request, $knowledge->name);
+    }
+
+    public function getSamplingQuestions(Request $request, $knowledge)
+    {
+        $user = Auth::user();
+        $know = Knowledge::where('name', $knowledge)->first();
+        if (empty($know)){
+            return $this->getKnowledges($request);
+        }
+        $questions = $user->getQuestionsByKnowledge($knowledge);
+        $questions['new'] = "Create a new question";
+        return $this->adminView('curriculum/question/index', [
+            'options' => $questions,
+            'title' => ucfirst($knowledge) . ' Questions',
             'nav' => 'questions'
         ]);
     }
@@ -60,48 +117,65 @@ class SamplingQuestionsController extends AdminBaseController
     public function postSamplingQuestions(Request $request)
     {
         $title ="Sampling Question";
-        if ($request->input('question') == 'new') {
-            $question = new SamplingQuestion();
+        $user = Auth::user();
+        $input = $request->input('question');
+        if (strpos($input,'new') !== false) {
+            $knowledge = str_replace('new_', '', $input);
+            $path = new PromptPath();
             return $this->adminView('curriculum/question/new', [
-                'title' => 'New sampling question',
-                'depths' => $question->getDepths()
+                'title' => "New sampling question",
+                'knowledges' => $path->allKnowledges(),
+                'depths' => $path->getDepths(),
+                'knowledge' => $knowledge
             ]);
         }
-        try {
-            $question = SamplingQuestion::findOrFail('id', $request->input('question'));
-        } catch (\Exception $e) {
+        $question = SamplingQuestion::find($request->input('question'));
+        if (empty($question)) {
             $this->message = "Couldn't locate the requested sampling question.";
-            return $this->getSamplingQuestions($request);
+            return $this->getKnowledges($request);
         }
         return $this->adminView('curriculum/question/edit', [
             'title' => $title . ': Edit sampling question',
-            'question' => $question
+            'question' => $question,
+            'knowledges' => $question->getCurrentKnowledges()
         ]);
     }
 
-    public function createSamplingQuestion(Request $request)
+    public function createOrUpdateSamplingQuestion(Request $request, $questionId = 0)
     {
-        $check = SamplingQuestion::where('question', $request->input('question'))->first();
-        if ($check) {
-            $this->message = "This sampling question already exists.";
+        $user = Auth::user();
+        if ($questionId == 0) {
             $question = new SamplingQuestion();
-            $depths = $question->getDepths();
-            return $this->adminView('curriculum/question/new', [
-                'title' => "New Sampling Question",
-                'depth' => $depths,
-                'nav' => 'questions'
-            ]);
+        } else {
+            $question = SamplingQuestion::findOrFail($questionId);
+            if (!$question->hasAccess($user)) {
+                $this->message = "Current user doesn't have edit access to the requested question.";
+                Log::debug($this->message);
+                return $this->getKnowledges($request);
+            }
         }
-        $newQuestion = [
-            'question' => $request->input('question'),
-            'depth' => $request->input('depth')
-        ];
-        $question = new SamplingQuestion($newQuestion);
+        $question->question = $request->input('question');
+        $question->depth =  $request->input('depth');
         $question->save();
 
+        $create = $request->input();
+        $knowledges = [];
+        foreach ($create as $label => $input) {
+            if (strpos($label, 'knowledge_') !== false) {
+                $knowledges[] = $input;
+            }
+        }
+        $question->editors()->attach($user, ['write_access' => true]);
+        $question->knowledges()->detach();
+        foreach ($knowledges as $knowledge) {
+            $know = Knowledge::firstOrNew(['name' => strtolower($knowledge)]);
+            $question->knowledges()->attach($know);
+        }
+        $question->save();
         $title = "Sampling Question";
         return $this->adminView('curriculum/question/edit', [
             'question' => $question,
+            'knowledges' => $question->getCurrentKnowledges(),
             'title' => $title,
             'nav' => 'questions'
         ]);

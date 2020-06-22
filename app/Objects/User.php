@@ -2,9 +2,11 @@
 
 namespace App\Objects;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 
 class User extends Authenticatable
 {
@@ -22,6 +24,10 @@ class User extends Authenticatable
     protected $attributes = [
         'admin' => false,
         'active' => true
+    ];
+
+    protected $withCount = [
+        'authored_paths', 'authored_prompts', 'authored_sampling_questions', 'authored_feedback_requests', 'prompts', 'prompt_paths', 'sampling_questions'
     ];
 
     /**
@@ -62,11 +68,41 @@ class User extends Authenticatable
         return $this->hasMany('App\Objects\FeedbackRequest', 'created_by_id');
     }
 
+    public function prompts()
+    {
+        return $this->belongsToMany('App\Objects\Prompt')
+            ->using('App\Objects\PromptUser')
+            ->withPivot([ 'write_access' ]);
+    }
+
     public function prompt_paths()
     {
         return $this->belongsToMany('App\Objects\PromptPath')
                 ->using('App\Objects\PathPromptUser')
                 ->withPivot([ 'write_access' ]);
+    }
+
+    public function sampling_questions()
+    {
+        return $this->belongsToMany('App\Objects\SamplingQuestion', 'sampling_questions_users')
+            ->using('App\Objects\SamplingQuestionUser')
+            ->withPivot([ 'write_access' ]);
+    }
+
+    public function getQuestionsByKnowledge($knowledge)
+    {
+        Log::debug("getQuestionsByKnowledge($knowledge)");
+        $questions = $this->sampling_questions()
+            ->whereHas('knowledges', function (Builder $query) use ($knowledge) {
+                $query->where('name', $knowledge);
+            })->get();
+
+        $set = [];
+        foreach ($questions as $question) {
+            $note = $question->pivot->write_access ?'':' (read only)';
+            $set[$question->id] = $note . ' ' . $question->question;
+        }
+        return $set;
     }
 
     public function getPaths()

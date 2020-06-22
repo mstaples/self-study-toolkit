@@ -2,13 +2,17 @@
 
 namespace App\Objects;
 
+use App\Traits\KnowledgableTrait;
 use App\Traits\PathTrait;
+use App\Traits\EditableTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PromptPath extends Model
 {
     use PathTrait;
+    use EditableTrait;
+    use KnowledgableTrait;
     use SoftDeletes;
 
     protected $fillable = [ 'state', 'path_level', 'path_category', 'path_title', 'steps','repeatable', 'path_thesis', 'created_by' ];
@@ -53,24 +57,6 @@ class PromptPath extends Model
             $names[$knowledge->name] = $knowledge->name;
         }
         return $names;
-    }
-
-    public function hasKnowledge($name)
-    {
-        $has = $this->knowledges()->where('name',$name)->first();
-        return empty($has) ? false : true;
-    }
-
-    public function hasAccess(User $user)
-    {
-        if ($user == $this->created_by) return true;
-        $find = $this->editors()->where([
-            'user_id' => $user->id
-        ])->first();
-
-        if ($find) return true;
-
-        return false;
     }
 
     public function getSteps()

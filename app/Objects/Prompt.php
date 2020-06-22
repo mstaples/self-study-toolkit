@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
-use App\Objects\PromptSegment;
+use App\Traits\EditableTrait;
 
 class Prompt extends Model
 {
     use SoftDeletes;
+    use EditableTrait;
+
     private $prompt_path_step, $prompt_title, $repeatable, $optional;
 
     protected $fillable = [ 'prompt_path_step', 'prompt_title', 'repeatable', 'optional' ];
@@ -39,6 +41,13 @@ class Prompt extends Model
     public function ordered_segments()
     {
         return $this->prompt_segments()->orderBy('prompt_segment_order', 'asc');
+    }
+
+    public function editors()
+    {
+        return $this->belongsToMany('App\Objects\User')
+            ->using('App\Objects\PromptUser')
+            ->withPivot([ 'write_access' ]);
     }
 
     public function getSegmentOrderOptions($named = true)

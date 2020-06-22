@@ -19,13 +19,24 @@ class PromptsController extends AdminBaseController
     {
         parent::__construct();
         $this->middleware(function ($request, $next) {
+            $user = Auth::user();
             $destination = $request->url();
             if (strpos($destination, '/prompts/view/') === false) {
-                $this->pathId = $request->route('pathId');
-                $path = PromptPath::findOrFail($this->pathId);
-                if (!$path->hasAccess(Auth::user())) {
-                    $this->message = "Current user doesn't have edit access to the selected Path.";
-                    return $this->viewPrompts($path->id);
+                $parameters = $request->route()->parameters();
+                if (array_key_exists('pathId', $parameters)) {
+                    $this->pathId = $request->route('pathId');
+                    $path = PromptPath::find($this->pathId);
+                    if (!empty($path) && !$path->hasAccess($user)) {
+                        $this->message = "Current user doesn't have edit access to the selected Path.";
+                        return $this->getPrompts();
+                    }
+                }
+                $has = $user->prompts_count;
+                if ($has === 0) {
+                    $message = "You haven't selected a prompt or previously authored any, so there aren't any prompts to show right now.";
+                    return redirect()
+                        ->action('Curriculum\PathsController@getPaths')
+                        ->with('message', $message);
                 }
             }
             $this->nav = 'prompts';
@@ -46,13 +57,20 @@ class PromptsController extends AdminBaseController
     }
 
     // user selects existing prompt to work on or to create a new prompt
-    public function getPrompts($pathId)
+    public function getPrompts($pathId = null)
     {
         $this->pathId = $pathId;
-        $path = PromptPath::findOrFail($pathId);
-        $title = $path->path_title;
-        $options = [ 'new' => 'Create a new prompt'];
-        $prompts = Prompt::where('prompt_path_id', $pathId)->get();
+        $path = PromptPath::find($pathId);
+        $user = Auth::user();
+        $options = [];
+        if (empty($path)) {
+            $title = "Prompts";
+            $prompts = $user->prompts;
+        } else {
+            $title = $path->path_title;
+            $options = [ 'new' => 'Create a new prompt'];
+            $prompts = Prompt::where('prompt_path_id', $pathId)->get();
+        }
         if ($prompts) {
             foreach ($prompts as $prompt) $options[$prompt->id] = $prompt->prompt_title;
         }

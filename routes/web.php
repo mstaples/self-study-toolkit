@@ -31,10 +31,7 @@ Route::prefix('curriculum')->group(function(){
     Route::any('path/view/{pathId?}', 'Curriculum\PathsController@viewPath');
     Route::get('path/missing/{type}', 'Curriculum\PathsController@missingPath');
 // Prompts
-    Route::get('prompts', function () {
-        return redirect()->action('Curriculum\PathsController@missingPath', [ 'type' => 'prompts' ]);
-    });
-    Route::get('prompts/{pathId}', 'Curriculum\PromptsController@getPrompts');
+    Route::get('prompts/{pathId?}', 'Curriculum\PromptsController@getPrompts');
     Route::post('prompts/{pathId}', 'Curriculum\PromptsController@postPrompts');
     Route::any('prompts/view/{pathId}', 'Curriculum\PromptsController@viewPrompts');
     Route::post('prompt/create/{pathId}', 'Curriculum\PromptsController@createPrompt');
@@ -49,16 +46,18 @@ Route::prefix('curriculum')->group(function(){
     Route::any('segments/down/{segmentId}', 'Curriculum\PromptSegmentsController@downSegment');
     Route::post('segments/delete/{segmentId}', 'Curriculum\PromptSegmentsController@deleteSegment');
 // Questions
-    Route::get('questions', function () {
-        return redirect()->action('Curriculum\PathsController@missingPath', [ 'type' => 'questions' ]);
-    });
-    Route::get('questions/{pathId}', 'Curriculum\SamplingQuestionsController@getSamplingQuestions');
-    Route::post('questions/{pathId}', 'Curriculum\SamplingQuestionsController@postSamplingQuestions');
-    Route::post('questions/create/{pathId}', 'Curriculum\SamplingQuestionsController@createSamplingQuestion');
-    Route::post('questions/edit/{pathId}/{questionId}', 'Curriculum\SamplingQuestionsController@editSamplingQuestion');
-    Route::post('questions/create/{pathId}', 'Curriculum\SamplingQuestionsController@createSamplingQuestion');
+    Route::get('knowledges', 'Curriculum\SamplingQuestionsController@getKnowledges');
+    Route::post('knowledges', 'Curriculum\SamplingQuestionsController@postKnowledges');
+    Route::post('knowledge/create', 'Curriculum\SamplingQuestionsController@createKnowledge');
+
+    Route::get('questions/', 'Curriculum\SamplingQuestionsController@getKnowledges');
+    Route::post('questions/', 'Curriculum\SamplingQuestionsController@postKnowledges');
+    Route::get('questions/{knowledge}', 'Curriculum\SamplingQuestionsController@getSamplingQuestions');
+    Route::post('questions/select', 'Curriculum\SamplingQuestionsController@postSamplingQuestions');
+    Route::post('questions/create', 'Curriculum\SamplingQuestionsController@createOrUpdateSamplingQuestion');
+    Route::post('questions/edit/{questionId}', 'Curriculum\SamplingQuestionsController@createOrUpdateSamplingQuestion');
     // Questions answer options
-    Route::post('options/create/{questionId}', 'Curriculum\SamplingOptionsController@createSamplingOption');
+    Route::post('options/create/{questionId?}', 'Curriculum\SamplingOptionsController@createOrUpdateSamplingQuestion');
     Route::post('options/edit/{questionId}/{optionId}', 'Curriculum\SamplingOptionsController@editSamplingOption');
     Route::post('options/delete/{questionId}/{optionId}', 'Curriculum\SamplingOptionsController@deleteSamplingOption');
     Route::post('options/all/{questionId}', 'Curriculum\SamplingOptionsController@allSamplingOptions');

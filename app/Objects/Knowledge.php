@@ -27,7 +27,8 @@ class Knowledge extends Model
 
     public function questions()
     {
-        return $this->belongsToMany('App\Objects\SamplingQuestion');
+        return $this->belongsToMany('App\Objects\SamplingQuestion', 'knowledges_questions', 'knowledge_id', 'question_id')
+            ->using('SamplingQuestionKnowledge');
     }
 
     public function feedback_requests()

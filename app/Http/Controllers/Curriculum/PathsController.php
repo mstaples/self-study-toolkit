@@ -98,6 +98,10 @@ class PathsController extends AdminBaseController
             $path = new PromptPath();
         } else {
             $path = PromptPath::findOrFail($pathId);
+            if (!$path->hasAccess($user)) {
+                $this->message = "Current user doesn't have edit access to the requested path.";
+                return $this->getPaths();
+            }
         }
         try {
             Log::debug('path_category: '.$request->input('path_category'));

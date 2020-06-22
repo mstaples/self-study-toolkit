@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class PromptPathsUsers extends Migration
+class PromptsUsers extends Migration
 {
     /**
      * Run the migrations.
@@ -13,19 +13,19 @@ class PromptPathsUsers extends Migration
      */
     public function up()
     {
-        Schema::create('prompt_path_user', function (Blueprint $table) {
+        Schema::create('prompt_user', function (Blueprint $table) {
             $table->id();
-            $table->unsignedInteger('user_id')->nullable();
-            $table->unsignedInteger('prompt_path_id');
+            $table->unsignedInteger('user_id');
+            $table->unsignedInteger('prompt_id');
             $table->boolean('write_access');
             $table->timestamps();
 
             $table->foreign('user_id')
                 ->references('id')->on('users')
-                ->onDelete('set null');
+                ->onDelete('cascade');
 
-            $table->foreign('prompt_path_id')
-                ->references('id')->on('prompt_paths')
+            $table->foreign('prompt_id')
+                ->references('id')->on('prompts')
                 ->onDelete('cascade');
         });
     }
@@ -37,6 +37,6 @@ class PromptPathsUsers extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('prompt_path_user');
+        Schema::dropIfExists('prompt_user');
     }
 }

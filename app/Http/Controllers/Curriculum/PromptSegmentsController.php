@@ -28,20 +28,23 @@ class PromptSegmentsController extends AdminBaseController
          * */
         $this->middleware(function ($request, $next) {
             $this->segmentId = (int) $request->route('segmentId');
-            $this->segment = PromptSegment::find($this->segmentId);
-            //Log::debug(__CLASS__.': '.$this->segmentId.': '.$this->segment->segment_title);
-            $prompt = $this->segment->prompt;
-            //Log::debug(__CLASS__.': Prompt: '.$prompt->prompt_title);
-            $this->path = $prompt->prompt_path;
-            //Log::debug(__CLASS__.': Path: '.$this->path->path_title);
-            if (!$this->path->hasAccess(Auth::user())) {
-                $this->message = "Current user doesn't have edit access to the selected Prompt.";
-                //Log::debug($this->message);
-                return redirect('prompts/view/'.$this->pathId);
+            $this->segment = PromptSegment::findOrFail($this->segmentId);
+            $user = Auth::user();
+            if (!$this->segment->path->hasAccess($user)) {
+                $this->message = "Current user doesn't have edit access to the selected Path.";
+                return $this->viewPrompts($this->segment->path->id);
             }
+            $prompt = $this->segment->prompt;
+            $this->path = $prompt->prompt_path;
             $this->nav = 'segments';
             return $next($request, $this->segmentId);
         });
+    }
+
+    public function getSegments(Request $request)
+    {
+        $user = Auth::user();
+        $segments = $user->authored_segments;
     }
 
     public function editSegment(Request $request, $segmentId)

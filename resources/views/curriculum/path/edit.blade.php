@@ -18,11 +18,10 @@
         <p>Path categories help learners figure out which paths to focus on based on their current priorities and concerns.</p>
         {{ Form::label('path_category', 'Path category:') }}
         {{ Form::select('path_category', $path->getCategories(), $path->category->id) }}
-        <h3>Tags</h3>
-        <p>Tags are currently broken.</p>
+
         {{ Form::label('existing_knowledges', 'Topics:') }}<br/>
         @foreach ($knowledges as $knowledge => $has)
-            {{ Form::checkbox('knowledge_'.$knowledge, $knowledge, $has ? 'checked' : 'unchecked' ) }}
+            {{ Form::checkbox('knowledge_'.$knowledge, $knowledge, $has ? 'checked' : '' ) }}
             {{ Form::label('knowledge_'.$knowledge, $knowledge) }}<br/>
         @endforeach
         {{ Form::label('new_knowledges', 'New Topics:') }}<br/>
