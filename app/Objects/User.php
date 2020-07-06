@@ -48,6 +48,11 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
+    public function operator()
+    {
+        return $this->hasOne('App\Objects\Operator');
+    }
+
     public function authored_paths()
     {
         return $this->hasMany('App\Objects\PromptPath', 'created_by_id');
@@ -92,16 +97,21 @@ class User extends Authenticatable
     public function getQuestionsByKnowledge($knowledge)
     {
         Log::debug("getQuestionsByKnowledge($knowledge)");
-        $questions = $this->sampling_questions()
-            ->whereHas('knowledges', function (Builder $query) use ($knowledge) {
+        $questions = SamplingQuestion::whereHas('knowledges', function (Builder $query) use ($knowledge) {
                 $query->where('name', $knowledge);
             })->get();
 
         $set = [];
         foreach ($questions as $question) {
-            $note = $question->pivot->write_access ?'':' (read only)';
+            $note = '';
+            $has = $this->sampling_questions()->where('sampling_question_id', $question->id)->first();
+            if (empty($has) || !$has->pivot->write_acccess) {
+                $note = ' (read only)';
+            }
             $set[$question->id] = $note . ' ' . $question->question;
         }
+
+
         return $set;
     }
 

@@ -96,7 +96,7 @@ class SamplingQuestionsTableSeeder extends Seeder
             foreach ($question['answer_options'] as $option) {
                 DB::table('sampling_options')->insert([
                     'state' => $question['state'],
-                    'sampling_question_id' => $id,
+                    'question_id' => $id,
                     'question_text' => $question['question'],
                     'option' => $option['option'],
                     'correct' => $option['correct'],

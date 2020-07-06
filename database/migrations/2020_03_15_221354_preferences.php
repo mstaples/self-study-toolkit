@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class Travels extends Migration
+class Preferences extends Migration
 {
     /**
      * Run the migrations.
@@ -13,23 +13,16 @@ class Travels extends Migration
      */
     public function up()
     {
-        Schema::create('travels', function (Blueprint $table) {
+        Schema::create('preferences', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('operator_id')->unsigned();
-            $table->integer('path_id')->unsigned()->nullable();
-            $table->boolean('completed');
-            $table->string('level'); // basic, student, mentor, leader, teacher
-            $table->json('notebook');
-            $table->timestamp('completed_on');
+            $table->string('type');
+            $table->string('name');
             $table->timestamps();
 
             $table->foreign('operator_id')
                 ->references('id')->on('operators')
                 ->onDelete('cascade');
-
-            $table->foreign('path_id')
-                ->references('id')->on('prompt_paths')
-                ->onDelete('set null');
         });
     }
 
@@ -40,6 +33,6 @@ class Travels extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('travels');
+        Schema::dropIfExists('preferences');
     }
 }

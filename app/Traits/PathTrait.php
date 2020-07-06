@@ -11,13 +11,14 @@ trait PathTrait
     public function getInteractionOptions()
     {
         return [
-            'none' => "none",
+            'info' => "information / links",
+            'image' => "image",
             'checkboxes' => 'Checkboxes',
             'radio_buttons' => 'Radio buttons',
-            'button' => 'Button',
-            'dropdown' => 'Select',
-            'plain_text' => 'Text',
-            'datepicker' => 'Date picker'
+            //'button' => 'Button',
+            //'dropdown' => 'Select',
+            //'plain_text' => 'Text',
+            //'datepicker' => 'Date picker'
         ];
     }
 

@@ -2,20 +2,28 @@
 
 namespace App\Objects;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Objects\Archetypes\Answer;
+use App\Objects\Learnings;
 
-class SamplingAnswer extends Model
+class SamplingAnswer extends Answer
 {
-    // depths 'vague', 'passing', 'familiar', 'deep'
-    protected $fillable = [ 'sampling_question_id', 'operator_id', 'question_text', 'answer', 'correct', 'depth', ];
+    protected $fillable = [
+        'question_id',
+        'operator_id',
+        'question_text',
+        'freeform_answer',
+        'selected_options',
+        'eval_percent',
+        'depth'
+    ];
     //
     public function operator()
     {
         return $this->belongsTo('App\Objects\Operator', 'operator_id');
     }
 
-    public function sampling_question()
+    public function learnings()
     {
-        return $this->belongsTo('App\Objects\SamplingQuestion');
+        return $this->belongsToMany('App\Objects\Learning', 'learnings_answers', 'answer_id');
     }
 }

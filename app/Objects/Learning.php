@@ -29,12 +29,12 @@ class Learning extends Model
 
     public function travels()
     {
-        return $this->belongsToMany('App\Objects\Travel');
+        return $this->belongsToMany('App\Objects\Travel', 'learnings_travels', 'learning_id', 'travel_id');
     }
 
     public function answers()
     {
-        return $this->belongsToMany('App\Objects\SamplingAnswer');
+        return $this->belongsToMany('App\Objects\SamplingAnswer', 'learnings_answers', 'answer_id', 'learning_id');
     }
 
     public function feedback_records()

@@ -26,13 +26,14 @@ class SamplingOptionsController extends AdminBaseController
         $this->middleware(function ($request, $next) {
             $this->questionId = (int) $request->route('questionId');
             $this->question = SamplingQuestion::find($this->questionId);
-            $path = $this->question->prompt_path;
-            Log::debug(__METHOD__.': Path: '.$path->path_title);
-            if (!$path->hasAccess(Auth::user())) {
-                $this->message = "Current user doesn't have edit access to the selected path.";
+            $user = Auth::user();
+            $has = $user->sampling_questions()->where('sampling_question_id', $this->questionId)->first();
+            if (empty($has)) {
+                $this->message = "Current user doesn't have edit access to the selected question.";
                 Log::debug($this->message);
-                return redirect()->action('Curriculum\PromptsController@viewPrompts',
-                    [ 'pathId' => $path->id]);
+                return redirect()->action('Curriculum\SamplingQuestionsController@adminView', [
+                    'request' => $request
+                ]);
             }
             $this->nav = 'questions';
             if (strpos($request->url, 'edit') !== false
@@ -46,14 +47,15 @@ class SamplingOptionsController extends AdminBaseController
     public function allSamplingOptions(Request $request, $questionId)
     {
         return $this->adminView('curriculum/option/all', [
-            'options' => $this->question->sampling_options,
+            'options' => $this->question->options,
             'questionId' => $this->questionId
         ]);
     }
 
     public function createSamplingOption(Request $request, $questionId)
     {
-        $check = $this->question->sampling_options()->where('option', $request->input('option'))->first();
+        $question = SamplingQuestion::find($questionId);
+        $check = $question->options()->where('option', $request->input('option'))->first();
         if ($check) {
             $this->message = "This question already has an option reading: ".$request->input('option');
             return $this->adminView('curriculum/option/new', [
@@ -67,7 +69,7 @@ class SamplingOptionsController extends AdminBaseController
             'correct' => $correct
         ];
         $option = new SamplingOption($newQuestion);
-        $this->question->sampling_options()->save($option);
+        $this->question->options()->save($option);
         $option->save();
 
         return $this->allSamplingOptions($request, $questionId);
@@ -78,7 +80,7 @@ class SamplingOptionsController extends AdminBaseController
         $option = SamplingOption::find($optionId);
         $text = $request->input('option');
         Log::debug(__METHOD__.': edit option: '.$option->option);
-        $check = $this->question->sampling_options()
+        $check = $this->question->options()
             ->where('option', $text)
             ->where('id', '!=', $optionId)
             ->first();

@@ -23,6 +23,7 @@ class PromptSegments extends Migration
                 $table->unsignedInteger('created_by_id')->nullable();
                 $table->string('segment_title');
                 $table->string('segment_type');
+                $table->string('accessory_type');
                 $table->string('segment_imageUrl')->nullable();
                 $table->string('segment_url')->nullable();
                 $table->text('segment_text')->nullable();

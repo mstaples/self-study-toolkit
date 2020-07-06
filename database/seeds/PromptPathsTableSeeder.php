@@ -4,6 +4,7 @@ use App\Objects\Prompt;
 use App\Objects\PathCategory;
 use App\Objects\PromptPath;
 use App\Objects\PromptSegment;
+use App\Objects\PromptSegmentOption;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
 
@@ -20,6 +21,7 @@ class PromptPathsTableSeeder extends Seeder
             $new->segment_url = $segment['url'];
             $new->prompt_segment_order = $key;
             $new->prompt_id = $prompt->id;
+            $new->accessory_type = $segment['accessory']['type'];
             if (!array_key_exists('options', $segment['accessory'])) {
                 var_dump("seed accessory record missing options key: ".$segment['title']);
             }
@@ -29,6 +31,20 @@ class PromptPathsTableSeeder extends Seeder
                 $segment['accessory']['text'],
                 $segment['accessory']['value']);
             $new->save();
+
+            foreach ($segment['accessory']['options'] as $label => $correct) {
+                // 'question_id', 'question_text', 'option', 'correct', 'state'
+                $option = new PromptSegmentOption();
+                $option->question_id = $new->id;
+                $option->question_text = $new->segment_text;
+                $option->option = $label;
+                $option->correct = $correct;
+                $option->state = 'live';
+                $option->save();
+
+                $new->options()->save($option);
+            }
+
             $prompt->prompt_segments()->save($new);
         }
         return true;

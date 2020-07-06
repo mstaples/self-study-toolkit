@@ -18,6 +18,8 @@ class SlackController extends Controller
         $body = json_decode($body['payload'], true);
         $user = $body['user'];
         $operator = $this->retrieveOperator($user);
+        Log::debug(__METHOD__.':'.__LINE__);
+        Log::debug($operator->preferences);
         $type = $body['type'];
         switch($type) {
             case 'block_actions':
@@ -27,10 +29,11 @@ class SlackController extends Controller
                     $this->setDefaultHomeTab();
                     $json = $this->defaultView;
                 } elseif ($actions[0]['block_id'] == config('services.slack.save_id')) {
-                    Log::debug('SlackController:actions new opt in agreement made, send first sampling');
+                    Log::debug('SlackController:actions new opt in agreement made, request topic preference');
                     $operator->opt_in = true;
                     $operator->save();
-                    $json = $this->firstSampling($operator->slack_user_id);
+
+                    $json = $this->topicPreferences($operator);
                 } else {
                     Log::debug('SlackController:actions operator found, parse actions');
                     foreach ($actions as $action) {
@@ -48,7 +51,10 @@ class SlackController extends Controller
                 $json = $this->parseAction($operator, $this->createMessageView($message));
                 break;
         }
-
+        if (empty($json)) {
+            Log::debug("Not updating Slack home - awaiting next user action.");
+            return response()->json([]);
+        }
         Log::debug("update:slack-home");
         //Log::debug($json);
         $exitCode = Artisan::call('update:slack-home', [

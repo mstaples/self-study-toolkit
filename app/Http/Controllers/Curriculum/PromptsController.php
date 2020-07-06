@@ -28,12 +28,13 @@ class PromptsController extends AdminBaseController
                     $path = PromptPath::find($this->pathId);
                     if (!empty($path) && !$path->hasAccess($user)) {
                         $this->message = "Current user doesn't have edit access to the selected Path.";
-                        return $this->getPrompts();
+                        return redirect()->action('Curriculum\PromptPathController@getPaths');
                     }
                 }
-                $has = $user->prompts_count;
-                if ($has === 0) {
-                    $message = "You haven't selected a prompt or previously authored any, so there aren't any prompts to show right now.";
+                $hasPaths = $user->prompt_paths_count;
+                $hasPrompts = $user->prompts_count;
+                if ($hasPaths + $hasPrompts === 0) {
+                    $message = "You haven't selected a path or previously authored any prompts, so there aren't any prompts to show right now.";
                     return redirect()
                         ->action('Curriculum\PathsController@getPaths')
                         ->with('message', $message);
@@ -44,6 +45,23 @@ class PromptsController extends AdminBaseController
         });
     }
 
+    public function postDemoPrompt($request, $promptId)
+    {
+        $prompt = Prompt::findOrFail($promptId);
+        $path = $prompt->prompt_path;
+        $user = Auth::user();
+        $operator = $user->operator;
+        if (empty($operator)) {
+            return $this->adminView('curriculum/path/demo', [
+                'title' => 'Connect your operator',
+                'nav' => 'paths',
+                'path' => $path
+            ]);
+        }
+        $this->message = $operator->startPromptDemo($promptId);
+        return $this->editPrompt($request, $path->id, $prompt->id);
+    }
+
     public function viewPrompts($pathId)
     {
         $path = PromptPath::findOrFail($pathId);
@@ -52,7 +70,8 @@ class PromptsController extends AdminBaseController
         return $this->adminView('curriculum/prompt/view', [
             'prompts' => $prompts,
             'title' => $title . ': Prompts',
-            'nav' => 'prompts'
+            'nav' => 'prompts',
+            'path' => $path
         ]);
     }
 
@@ -62,22 +81,30 @@ class PromptsController extends AdminBaseController
         $this->pathId = $pathId;
         $path = PromptPath::find($pathId);
         $user = Auth::user();
+        $heading = '';
         $options = [];
         if (empty($path)) {
-            $title = "Prompts";
+            $title = "Authored prompts";
             $prompts = $user->prompts;
+            $heading = 'component/heading/path';
         } else {
             $title = $path->path_title;
             $options = [ 'new' => 'Create a new prompt'];
             $prompts = Prompt::where('prompt_path_id', $pathId)->get();
         }
-        if ($prompts) {
-            foreach ($prompts as $prompt) $options[$prompt->id] = $prompt->prompt_title;
+        Log::debug(__METHOD__);
+        Log::debug(count($prompts));
+        if (count($prompts) == 0 && count($options) == 0 || (!empty($path) && !$path->hasAccess($user))) {
+            $this->message = "Select a path to view, edit, or create prompts you haven't already authored.";
+            return redirect()->action('Curriculum\PathsController@getPaths');
         }
+        foreach ($prompts as $prompt) $options[$prompt->id] = $prompt->prompt_title;
         return $this->adminView('curriculum/prompt/index', [
             'options' => $options,
             'title' => $title . ': Prompts',
-            'nav' => 'prompts'
+            'nav' => 'prompts',
+            'heading' => $heading,
+            'path' => $path
         ]);
     }
 
@@ -119,36 +146,32 @@ class PromptsController extends AdminBaseController
     public function editPrompt(Request $request, $pathId, $promptId)
     {
         $prompt = Prompt::find($promptId);
-        $count = $prompt->prompt_segments_count;
-        if ($count == 0) {
-            Log::debug("editPrompt calling newPromptSegmentFromRequest for first prompt segment");
-            $this->newPromptSegmentFromRequest($request, $prompt, ++$count);
-        } else {
-            Log::debug("editPrompt calling newPromptSegmentFromRequest for prompt w $count existing segments");
-            $this->newPromptSegmentsFromRequest($request, $prompt, ++$count);
-        }
-
         $repeatable = $request->input('repeatable') == 'true' ? true : false;
         $optional = $request->input('optional') == 'true' ? true : false;
         $prompt->prompt_title = $request->input('prompt_title');
         $prompt->repeatable = $repeatable;
         $prompt->optional = $optional;
         $prompt->save();
-        if ($request->input('next') != 'add') {
-            return redirect()->action('Curriculum\SamplingQuestionsController@getSamplingQuestions', [
-                'pathId' => $pathId
+
+        switch($request->input('next')) {
+            case 'questions':
+                return redirect()->action('Curriculum\SamplingQuestionsController@getSamplingQuestions');
+            case 'prompts':
+                return redirect()->action('Curriculum\PromptsController@getPrompts');
+            case 'paths':
+                return redirect()->action('Curriculum\PathsController@getPaths');
+            case 'stay':
+            default:
+            $path = PromptPath::findOrFail($pathId);
+            $title = $path->path_title . " Prompt: ". $prompt->prompt_title;
+            return $this->adminView('curriculum/prompt/edit', [
+                'path' => $path,
+                'title' => $title,
+                'prompt' => $prompt,
+                'segments' => $prompt->ordered_segments,
+                'nav' => 'prompts'
             ]);
         }
-
-        $path = PromptPath::findOrFail($pathId);
-        $title = $path->path_title . " Prompt: ". $prompt->prompt_title;
-        return $this->adminView('curriculum/prompt/edit', [
-            'path' => $path,
-            'title' => $title,
-            'prompt' => $prompt,
-            'segments' => $prompt->ordered_segments,
-            'nav' => 'segments'
-        ]);
     }
 
     public function createPrompt(Request $request, $pathId)
@@ -161,7 +184,7 @@ class PromptsController extends AdminBaseController
                 'path' => $path,
                 'title' => $path->path_title . ": New Prompt",
                 'prompt' => $check,
-                'nav' => 'segments'
+                'nav' => 'prompts'
             ]);
         }
         $repeatable = $request->input('repeatable') == 'true' ? true : false;
@@ -174,20 +197,14 @@ class PromptsController extends AdminBaseController
         $prompt = new Prompt($newPrompt);
         $path->prompts()->save($prompt);
         $prompt->save();
-        $prompt = $this->newPromptSegmentFromRequest($request, $prompt);
 
-        if ($request->input('next') == 'add') {
-            $title = $path->path_title . " Prompt: ". $prompt->prompt_title;
-            return $this->adminView('curriculum/prompt/edit', [
-                'path' => $path,
-                'title' => $title,
-                'prompt' => $prompt,
-                'segments' => $prompt->ordered_segments,
-                'nav' => 'segments'
-            ]);
-        }
-        return redirect()->action('Curriculum\SamplingQuestionsController@getSamplingQuestions', [
-            'pathId' => $pathId
+        $title = $path->path_title . " Prompt: ". $prompt->prompt_title;
+        return $this->adminView('curriculum/prompt/edit', [
+            'path' => $path,
+            'title' => $title,
+            'prompt' => $prompt,
+            'segments' => $prompt->ordered_segments,
+            'nav' => 'prompts'
         ]);
     }
 

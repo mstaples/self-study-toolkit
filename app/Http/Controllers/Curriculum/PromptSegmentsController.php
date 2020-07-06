@@ -26,11 +26,19 @@ class PromptSegmentsController extends AdminBaseController
          * Redirect any request that doesn't have the right access or data.
          * Also pull request info into the class that would otherwise be duplicated in each action
          * */
-        $this->middleware(function ($request, $next) {
+        $this->middleware(function (Request $request, $next) {
+            $destination = $request->url();
+            if (strpos($destination, '/segments/new') !== false) {
+                Log::debug("making a new segment record");
+                Log::debug($request);
+                return $next($request);
+            }
             $this->segmentId = (int) $request->route('segmentId');
+            Log::debug(__CLASS__.": segmentId ".$this->segmentId);
             $this->segment = PromptSegment::findOrFail($this->segmentId);
             $user = Auth::user();
-            if (!$this->segment->path->hasAccess($user)) {
+            $path = $this->segment->prompt->prompt_path;
+            if (!$path->hasAccess($user)) {
                 $this->message = "Current user doesn't have edit access to the selected Path.";
                 return $this->viewPrompts($this->segment->path->id);
             }
@@ -47,17 +55,60 @@ class PromptSegmentsController extends AdminBaseController
         $segments = $user->authored_segments;
     }
 
+    public function newSegment(Request $request)
+    {
+        $required = [ 'segment_title', 'accessory_type', 'prompt_id' ];
+        foreach ($required as $require) {
+            if (!$request->has($require)) {
+                Log::debug("segment form submitted at least partially empty ($require)");
+                return false;
+            }
+        }
+        $prompt_id = $request->input('prompt_id');
+        $prompt = Prompt::findOrFail($prompt_id);
+        $exists = $prompt->prompt_segments()->where('segment_title', $request->input('segment_title'))->first();
+        if (!empty($exists)) {
+            $this->message = "Not saved! This prompt already has a segment titled \"" .
+                $request->input('segment_title0') .
+                "\".";
+            return false;
+        }
+        Log::debug("attempting to save new segment titled \"" . $request->input('segment_title') . ".");
+        $order = $prompt->prompt_segments_count + 1;
+        Log::debug("New order: $order");
+        $segment = new PromptSegment([
+            'segment_title' => $request->input('segment_title'),
+            'prompt_segment_order' => $order,
+            'accessory_type' => $request->input('accessory_type')
+        ]);
+        $prompt->prompt_segments()->save($segment);
+        $segment->save();
+        return $this->editSegment($request, $segment->id);
+    }
+
     public function editSegment(Request $request, $segmentId)
     {
-        $fillable = $this->segment->fillable;
+        $segment = PromptSegment::find($segmentId);
+        $fillable = $segment->fillable;
         foreach ($fillable as $attribute) {
-            Log::debug(__METHOD__.': update segment '.$attribute);
-            $this->segment->$attribute = $request->input($attribute);
+            if ($request->has($attribute)) {
+                $segment->$attribute = $request->input($attribute);
+            }
         }
-        $this->segment->save();
-        $this->message = "Prompt segment \"$this->segment->segment_title\" saved.";
+        $segment->save();
+        $this->message = "Prompt segment " . $segment->segment_title . " saved.";
+        $prompt = $segment->prompt;
+        $path = $prompt->prompt_path;
 
-        return $this->adminView('curriculum/segment/edit', [ 'path' => $this->path ]);
+        Log::debug(__METHOD__);
+
+        return $this->adminView('curriculum/segment/edit', [
+            'path' => $path,
+            'segment' => $segment,
+            'accessory' => $segment->getAccessory(),
+            'index' => $segment->prompt_segment_order,
+            'last' => $segment->prompt_segment_order == $prompt->prompt_segments_count
+        ]);
     }
 
     public function deleteSegment(Request $request, $segmentId)
@@ -72,16 +123,17 @@ class PromptSegmentsController extends AdminBaseController
 
     public function upSegment(Request $request, $segmentId)
     {
-        Log::debug(__CLASS__.': '.__METHOD__.': '.$this->segment->segment_title);
-        $result = $this->segment->moveOrderEarlier();
-        $title = $this->segment->segment_title;
+        Log::debug(__METHOD__.': '.$this->segmentId);
+        $segment = PromptSegment::find($this->segmentId);
+        Log::debug($segment);
+        $result = $segment->moveOrderEarlier();
+        $title = $segment->segment_title;
         if ($result) {
             $this->message = "Segment $title moved earlier";
         } else {
             $this->message = "Unable to move segment $title earlier";
         }
         Log::debug($this->message);
-        $segment = PromptSegment::find($segmentId);
         $prompt = $segment->prompt;
         $segments = $prompt->ordered_segments;
         return $this->adminView('curriculum/segment/all', [ 'segments' => $segments, 'path' => $this->path ]);
@@ -89,18 +141,20 @@ class PromptSegmentsController extends AdminBaseController
 
     public function downSegment(Request $request, $segmentId)
     {
-        Log::debug(__CLASS__.': '.__METHOD__.': '.$this->segment->segment_title);
-        $result = $this->segment->moveOrderLater();
-        $title = $this->segment->segment_title;
+        Log::debug(__METHOD__.': '.$segmentId);
+        $segment = PromptSegment::find($segmentId);
+        Log::debug($segment);
+        $result = $segment->moveOrderLater();
+        $title = $segment->segment_title;
         if ($result) {
             $this->message = "Segment $title moved later";
         } else {
             $this->message = "Unable to move segment $title later";
         }
         Log::debug($this->message);
-        $segment = PromptSegment::find($segmentId);
         $prompt = $segment->prompt;
+        $path = $prompt->prompt_path;
         $segments = $prompt->ordered_segments;
-        return $this->adminView('curriculum/segment/all', [ 'segments' => $segments, 'path' => $this->path ]);
+        return $this->adminView('curriculum/segment/all', [ 'segments' => $segments, 'path' => $path ]);
     }
 }

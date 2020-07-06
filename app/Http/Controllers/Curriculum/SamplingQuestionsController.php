@@ -37,7 +37,7 @@ class SamplingQuestionsController extends AdminBaseController
                     $question = SamplingQuestion::find($this->questionId);
                     if (!empty($question) && !$question->hasAccess($user)) {
                         $this->message = "Current user doesn't have edit access to the selected Question.";
-                        return $this->getPrompts();
+                        return $this->getKnowledges();
                     }
                 }
             }
@@ -48,19 +48,45 @@ class SamplingQuestionsController extends AdminBaseController
 
     public function createKnowledge(Request $request)
     {
+        if ($request->has('knowledge') && $request->input('knowledge') == 'new') {
+            return $this->adminView('curriculum/knowledge/new', [
+                'title' => "New Knowledge",
+                'nav' => 'knowledges'
+            ]);
+        }
+        $required = [ 'name' ];
+        $save = true;
+        foreach ($required as $require) {
+            if (!$request->has($require)) {
+                Log::debug(__METHOD__.": called without required form data: ".$require);
+                $save = false;
+                $this->message = "New knowledge not saved (form error).";
+                break;
+            }
+        }
         $check = Knowledge::where('name', $request->input('name'))->first();
         if ($check) {
             $this->message = "This knowledge already exists.";
+            $save = false;
+        }
+        if (strlen($request->input('name') < 3)) {
+            Log::debug(__METHOD__.": called with an unexpectedly short 'name' value: ".$request->input('name'));
+            $save = false;
+            $this->message = "New knowledge not saved (form error).";
+        }
+        if (!$save) {
             return $this->adminView('curriculum/knowledge/new', [
                 'title' => "New Knowledge",
                 'nav' => 'knowledges'
             ]);
         }
         $newKnowledge = [
-            'name' => $request->input('question'),
-            'description' => $request->input('depth'),
+            'name' => $request->input('name'),
             'prerequisite' => false
         ];
+        if ($request->has('description') && strlen($request->input('description')) > 3) {
+            $newKnowledge['description'] = $request->input("description");
+        }
         $knowledge = new Knowledge($newKnowledge);
         $knowledge->save();
 
@@ -79,33 +105,31 @@ class SamplingQuestionsController extends AdminBaseController
         $options['new'] = "Create a new knowledge";
         return $this->adminView('curriculum/knowledge/index', [
             'options' => $options,
-            'title' => 'Knowledges',
-            'nav' => 'questions'
+            'title' => 'Knowledges: select or create',
+            'nav' => 'knowledges'
         ]);
     }
 
     public function postKnowledges(Request $request)
     {
-        $knowledge = $request->input('knowledge');
-        if (!$knowledge) return $this->getKnowledges($request);
+        $know = $request->has('knowledge');
+        if (!$know) return $this->getKnowledges($request);
 
-        if ($knowledge == 'new') {
+        $know = $request->input('knowledge');
+        if ($know == 'new') {
             return $this->createKnowledge($request);
         }
 
-        Log::debug("postKnowledges()->input $knowledge");
-        $knowledge = Knowledge::find($knowledge);
+        Log::debug("postKnowledges()->input $know");
+        $knowledge = Knowledge::find($know);
         return $this->getSamplingQuestions($request, $knowledge->name);
     }
 
     public function getSamplingQuestions(Request $request, $knowledge)
     {
         $user = Auth::user();
-        $know = Knowledge::where('name', $knowledge)->first();
-        if (empty($know)){
-            return $this->getKnowledges($request);
-        }
-        $questions = $user->getQuestionsByKnowledge($knowledge);
+        Knowledge::where('name', $knowledge)->firstOrFail();
+        $questions = $user->getQuestionsByKnowledge($knowledge, true);
         $questions['new'] = "Create a new question";
         return $this->adminView('curriculum/question/index', [
             'options' => $questions,
@@ -133,6 +157,16 @@ class SamplingQuestionsController extends AdminBaseController
         if (empty($question)) {
             $this->message = "Couldn't locate the requested sampling question.";
             return $this->getKnowledges($request);
+        }
+        $has = $user->sampling_questions()
+            ->where('sampling_question_id', $request->input('question'))
+            ->first();
+        if (empty($has) || !$has->write_access) {
+            return $this->adminView('curriculum/question/view', [
+                'title' => $title . ' (Read only)',
+                'question' => $question,
+                'knowledges' => $question->getCurrentKnowledges()
+            ]);
         }
         return $this->adminView('curriculum/question/edit', [
             'title' => $title . ': Edit sampling question',

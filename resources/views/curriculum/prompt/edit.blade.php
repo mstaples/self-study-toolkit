@@ -2,6 +2,9 @@
 
 @section('title', $title)
 
+@include('component.block.path')
+@include('component.block.prompt')
+
 @section('open-main')
     <div class="form-check">
         {{ Form::open(['url' => 'curriculum/prompt/edit/'.$path->id.'/'.$prompt->id]) }}
@@ -9,26 +12,21 @@
 
         @section('sidebar')
             <section class="box">
-                <h3>{{ $path->path_title }}</h3>
-                <p>{{ $path->path_thesis }}</p>
-                {{ Form::label('path_level', 'Path level: '.$path->path_level) }}
-                <br/>
-                {{ Form::label('path_category', 'Path category: '.$path->path_category) }}
-                <br/>
-                {{ Form::label('prompt_step', 'Prompt step: ') }}
-                {{ Form::select('prompt_step', $path->getSteps(), $path->prompt_path_step ) }}
-                <br/>
+                {{ Form::select('prompt_step', $path->getSteps(), $prompt->prompt_path_step ) }}
+                <br/><br/>
+                {{ Form::submit('Save and ', [ 'class' => 'btn btn-success btn-block' ]) }}
                 {{ Form::select('next', [
-                        'add' => 'Add another segment',
-                        'continue' => 'Continue to Sampling Questions'
-                        ], 'add' ) }}
-                {{ Form::submit('Save') }}
+                        'stay' => 'Stay here',
+                        'prompts' => 'select a prompt',
+                        'paths' => 'select a path',
+                        'questions' => 'view knowledges and questions'
+                        ], 'stay' ) }}
             </section>
         @endsection
 
         @section('content')
-            {{ Form::label('prompt_title', 'Prompt title*:') }}
-            {{ Form::text('prompt_title', $prompt->prompt_title) }}<br/>
+            <h4>{{ Form::label('prompt_title', 'Prompt title*:') }}</h4>
+            <h2>{{ Form::text('prompt_title', $prompt->prompt_title) }}</h2>
             {{ Form::label('repeatable', 'Repeatable? ') }}
             {{ Form::checkbox('repeatable', 'true', $prompt->repeatable) }}<br/>
             {{ Form::label('optional', 'Optional? ') }}
@@ -37,9 +35,8 @@
             <p>Prompts are broken up into concise segments. Define 1 to 5 segments for this prompt:</p>
             <div id="all-segments">
                 @foreach ($segments as $segment)
-                    <div id="segment-{{ $segment->id }}">
-                        @include('curriculum.segment.edit', [ 'index' => $loop->iteration, 'segment' => $segment,'last' => $loop->last ])
-                        @include('curriculum.segment.options', [ 'index' => $loop->iteration, 'segment' => $segment, 'last' => $loop->last ])
+                    <div id="segment-{{ $loop->iteration }}" class="prompt-{{ $prompt->id }}-segment">
+                        @include('curriculum.segment.edit', [ 'index' => $loop->iteration, 'segment' => $segment,'last' => $loop->last, 'accessory' => $segment->getAccessory() ])
                         <hr/>
                     </div>
                 @endforeach

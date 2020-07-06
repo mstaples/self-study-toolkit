@@ -37,8 +37,8 @@
         <h3>Options</h3>
         <p>Any number of answer options is useful. A random subset of available answer options will be selected, including at least one correct option, each time this sampling question is presented.</p>
         <div id="options-all">
-            @if($question->sampling_options)
-            @foreach($question->sampling_options as $option)
+            @if($question->options)
+            @foreach($question->options as $option)
                 <div id="option-{{ $option->id }}-div">
                     @include('curriculum.option.edit', [ 'index' => $loop->iteration, 'option' => $option,'last' => $loop->last, 'questionId' => $question->id ])
                 </div>

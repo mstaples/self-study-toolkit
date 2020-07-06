@@ -1,7 +1,13 @@
 
-@extends('layouts.empty')
+@extends('layouts.left')
 
 @section('title', $title)
+
+@if (!empty($path))
+    @include('component.block.path')
+@endif
+
+@section('sidebar')@endsection
 
 @section('content')
     <h2>Prompts</h2>
@@ -34,12 +40,12 @@
                         @if (! @empty($segment->segment_accessory['text']))
                             <li>Input Text: {{ $segment->segment_accessory['text']['text'] }}</li>
                         @endif
-                        @if (! @empty($segment->segment_accessory['options']))
+                        @if (! @empty($segment->segment_accessory_options))
                             <li>options:</li>
                             <ul>
-                                @foreach($segment->segment_accessory['options'] as $option)
-                                    <li>{{ $option['value'] }}
-                                    @if ($segment->segment_accessory['key'][$option['value']])
+                                @foreach($segment->segment_accessory_options as $option)
+                                    <li>{{ $option->option }}
+                                    @if ($option->correct)
                                         *
                                     @endif
                                     </li>

@@ -1,16 +1,28 @@
-{{ Form::label('segment_title', "Segment title:") }}
-{{ Form::text('segment_title') }}<br/>
-{{ Form::label('segment_url', "Segment url (optional):") }}
-{{ Form::text('segment_url') }}<br/>
-{{ Form::label('segment_url', "Segment image url (optional):") }}
-{{ Form::text('segment_imageUrl') }}<br/>
-{{ Form::label('segment_accessory_type', "Segment interaction (optional): ") }}
-{{ Form::select('segment_accessory_type', $path->getInteractionOptions() ) }}<br/>
-{{ Form::label('segment_accessory_text', "Segment interaction label (optional): ") }}
-{{ Form::text('segment_accessory_text' ) }}<br/>
-{{ Form::label('segment_accessory_options', 'All Options (optional):') }}
-{{ Form::text('segment_accessory_options') }}<br/>
-{{ Form::label('segment_answers', 'Correct Options (optional):') }}
-{{ Form::text('segment_answers') }}<br/>
-{{ Form::label('segment_text', "Segment text (optional):") }}<br/>
-{{ Form::textarea('segment_text') }}
+@include('curriculum.segment.options', [
+    'index' => 0,
+    'prompt_id' => $prompt->id,
+    'segment' => 'new',
+    'last' => true
+    ])
+<div class="card alert-info m-2 collapse" id="segment0">
+    <div class="card-body">
+        <h2>Add a new segment</h2>
+{{ Form::hidden('question_id0', 0) }}
+{{ Form::label('segment_title0', "Segment title*:") }}
+{{ Form::text('segment_title0') }}<br/>
+{{ Form::label('accessory_type0', "Segment type*: ") }}
+{{ Form::select('accessory_type0', $path->getInteractionOptions() ) }}<br/>
+{{ Form::label('segment_url0', "Segment url (optional):") }}
+{{ Form::text('segment_url0') }}<br/>
+{{ Form::label('segment_url0', "Segment image url (optional):") }}
+{{ Form::text('segment_imageUrl0') }}<br/>
+{{ Form::label('segment_accessory_text0', "Segment interaction label (optional): ") }}
+{{ Form::text('segment_accessory_text0' ) }}<br/>
+{{ Form::label('segment_accessory_options0', 'All Options (optional):') }}
+{{ Form::text('segment_accessory_options0') }}<br/>
+{{ Form::label('segment_answers0', 'Correct Options (optional):') }}
+{{ Form::text('segment_answers0') }}<br/>
+{{ Form::label('segment_text0', "Segment text (optional):") }}<br/>
+{{ Form::textarea('segment_text0') }}
+    </div>
+</div>

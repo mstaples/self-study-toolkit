@@ -18,11 +18,13 @@ class SamplingAnswers extends Migration
             Schema::create('sampling_answers', function (Blueprint $table) {
                 $table->increments('id');
                 $table->integer('operator_id')->unsigned();
-                $table->integer('sampling_question_id');
+                $table->unsignedInteger('question_id')->nullable();
                 $table->string('question_text');
-                $table->string('answer');
                 $table->string('depth');
-                $table->boolean('correct')->nullable();
+                $table->string('freeform_answer')->nullable();
+                $table->json('selected_options')->nullable();
+                $table->json('available_options')->nullable();
+                $table->integer('eval_percent')->nullable();
                 $table->timestamps();
 
                 $table->foreign('operator_id')

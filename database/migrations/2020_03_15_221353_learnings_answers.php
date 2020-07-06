@@ -16,15 +16,15 @@ class LearningsAnswers extends Migration
         Schema::create('learnings_answers', function (Blueprint $table) {
             $table->id();
             $table->integer('answer_id')->unsigned();
-            $table->integer('knowledge_id')->unsigned();
+            $table->integer('learning_id')->unsigned();
             $table->timestamps();
 
             $table->foreign('answer_id')
                 ->references('id')->on('sampling_answers')
                 ->onDelete('cascade');
 
-            $table->foreign('knowledge_id')
-                ->references('id')->on('knowledges')
+            $table->foreign('learning_id')
+                ->references('id')->on('learnings')
                 ->onDelete('cascade');
         });
     }

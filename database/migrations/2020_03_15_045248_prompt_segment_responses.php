@@ -1,10 +1,10 @@
 <?php
 
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
-class FeedbackRecords extends Migration
+class PromptSegmentResponses extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,12 @@ class FeedbackRecords extends Migration
      */
     public function up()
     {
-        // Create the "feedback_records" table
-        if (!Schema::hasTable('feedback_records')) {
-            Schema::create('feedback_records', function (Blueprint $table) {
+        if (!Schema::hasTable('prompt_segment_responses')) {
+            Schema::create('prompt_segment_responses', function (Blueprint $table) {
                 $table->increments('id');
                 $table->unsignedInteger('operator_id');
-                $table->unsignedInteger('author_id')->nullable();
-                $table->string('relationship'); // primary, secondary, tertiary
-                $table->unsignedInteger('question_id');
+                $table->unsignedInteger('question_id')->nullable();
+                $table->unsignedInteger('travel_id');
                 $table->string('question_text');
                 $table->string('freeform_answer')->nullable();
                 $table->json('selected_options')->nullable();
@@ -32,9 +30,9 @@ class FeedbackRecords extends Migration
                     ->references('id')->on('operators')
                     ->onDelete('cascade');
 
-                $table->foreign('author_id')
-                    ->references('id')->on('users')
-                    ->onDelete('set null');
+                $table->foreign('travel_id')
+                    ->references('id')->on('travels')
+                    ->onDelete('cascade');
             });
         }
     }
@@ -46,6 +44,6 @@ class FeedbackRecords extends Migration
      */
     public function down()
     {
-        Schema::drop('feedback_records');
+        Schema::drop('prompt_segment_responses');
     }
 }

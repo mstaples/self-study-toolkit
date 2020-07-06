@@ -2,12 +2,11 @@
 
 namespace App\Objects;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Objects\Archetypes\Question;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
-use phpDocumentor\Reflection\Types\Parent_;
 
-class PromptSegment extends Model
+class PromptSegment extends Question
 {
     use SoftDeletes;
 
@@ -20,16 +19,29 @@ class PromptSegment extends Model
     ];
     public $elements = [];
 
-    protected $fillable = [
+    public $fillable = [
         'segment_title', 'segment_text', 'segment_type', 'segment_imageUrl', 'segment_url',
-        'segment_accessory', 'segment_elements', 'prompt_segment_order' ];
-    protected $casts = [ 'segment_accessory' => 'array', 'segment_elements' => 'array', 'segment_key' => 'array' ];
-    protected $attributes = [ 'segment_type' => 'section', 'prompt_segment_order' => 1 ];
+        'segment_accessory', 'segment_elements', 'prompt_segment_order', 'accessory_type' ];
+    protected $casts = [
+        'segment_accessory' => 'array',
+        'segment_elements' => 'array',
+        'segment_key' => 'array'
+    ];
+    protected $attributes = [
+        'segment_type' => 'section',
+        'prompt_segment_order' => 1,
+        'accessory_type' => 'info'
+    ];
 
     public function __construct(array $attributes = [])
     {
         $this->segment_accessory = $this->accessoryStruct;
         parent::__construct($attributes);
+    }
+
+    public function options()
+    {
+        return $this->hasMany('App\Objects\PromptSegmentOption', 'question_id');
     }
 
     public function prompt()
@@ -58,7 +70,7 @@ class PromptSegment extends Model
     public function moveOrderEarlier()
     {
         $currentOrder = (int) $this->prompt_segment_order;
-        Log::debug(__METHOD__.': current prompt segment order: '.$currentOrder);
+        Log::debug(__METHOD__.': '.$this->segment_title.' current prompt segment order: '.$currentOrder);
         $newOrder = (int) $currentOrder - 1;
         Log::debug(__METHOD__.': attempting to set new segment order: '.$newOrder);
         if ($newOrder < 1 || $newOrder > $this->prompt->prompt_segments_count) {
@@ -70,7 +82,7 @@ class PromptSegment extends Model
 
     public function moveOrderLater()
     {
-        Log::debug(__METHOD__.': current prompt segment order: '.$this->prompt_segment_order);
+        Log::debug(__METHOD__.': '.$this->segment_title.' current prompt segment order: '.$this->prompt_segment_order);
         $order = (int) $this->prompt_segment_order + 1;
         if ($order < 1 || $order > $this->prompt->prompt_segments_count) {
             return false;
@@ -119,9 +131,7 @@ class PromptSegment extends Model
     public function getSegmentAnswersString()
     {
         $key = $this->key;
-        $string = implode(',', $key);
-
-        return strlen($string) < 2 ? '' : $string;
+        return strlen($key) < 2 ? '' : implode(',', $key);
     }
 
     public function createAccessory($type, $options, $text, $value)
@@ -143,6 +153,7 @@ class PromptSegment extends Model
                     ];
                 }
                 break;
+            case 'info':
             case 'button':
                 $accessory['text'] = $text;
                 $accessory['value'] = $value;

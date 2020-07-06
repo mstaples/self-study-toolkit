@@ -14,17 +14,17 @@ class LearningsTravels extends Migration
     public function up()
     {
         Schema::create('learnings_travels', function (Blueprint $table) {
-            $table->id();
-            $table->integer('travel_id')->unsigned();
-            $table->integer('knowledge_id')->unsigned();
+            $table->increments('id');
+            $table->unsignedInteger('travel_id')->unsigned();
+            $table->unsignedInteger('learning_id')->unsigned();
             $table->timestamps();
 
             $table->foreign('travel_id')
                 ->references('id')->on('travels')
                 ->onDelete('cascade');
 
-            $table->foreign('knowledge_id')
-                ->references('id')->on('knowledges')
+            $table->foreign('learning_id')
+                ->references('id')->on('learnings')
                 ->onDelete('cascade');
         });
     }

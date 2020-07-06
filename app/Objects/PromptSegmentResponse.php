@@ -4,21 +4,26 @@ namespace App\Objects;
 
 use App\Objects\Archetypes\Answer;
 
-class FeedbackRecord extends Answer
+class PromptSegmentResponse extends Answer
 {
+    //
     protected $fillable = [
+        'travel_id',
         'operator_id',
-        'author_id',
-        'feedback_request_id',
+        'question_id',
         'question_text',
         'freeform_answer',
         'selected_options',
         'eval_percent',
-        'relationship'
     ];
+
+    public function travel()
+    {
+        return $this->belongsTo('App\Objects\Travel', 'travel_id');
+    }
 
     public function operator()
     {
-        return $this->belongsTo('Operator');
+        return $this->belongsTo('App\Objects\Operator');
     }
 }

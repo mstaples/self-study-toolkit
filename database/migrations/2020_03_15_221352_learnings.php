@@ -14,7 +14,7 @@ class Learnings extends Migration
     public function up()
     {
         Schema::create('learnings', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             $table->integer('operator_id')->unsigned();
             $table->integer('knowledge_id')->unsigned();
             $table->integer('feedback_received');

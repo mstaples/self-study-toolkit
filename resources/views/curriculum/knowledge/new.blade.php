@@ -17,6 +17,7 @@
             Create
         </button>
     </section>
+            <p><small>*Some topics have prerequisites -- other topics a learner needs to have some understanding of before approaching the new topic. The more prerequisites a topic has, the more advanced the level of path it's appropriate to associate with it.</small></p>
 @endsection
 
 @section('content')

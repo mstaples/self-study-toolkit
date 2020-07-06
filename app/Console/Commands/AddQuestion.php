@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Objects\PathCategory;
 use App\Objects\Knowledge;
 use App\Objects\SamplingAnswer;
+use App\Objects\SamplingOption;
 use App\Objects\SamplingQuestion;
 use App\Traits\PathTrait;
 use Illuminate\Console\Command;
@@ -69,8 +70,8 @@ class AddQuestion extends Command
             $correct = $this->choice('Is this a correct answer option? ', $choices, 'no');
             $correct = $correct == 'no' ? false : true;
 
-            $new = new SamplingAnswer();
-            $new->answer = $option;
+            $new = new SamplingOption();
+            $new->option = $option;
             $new->correct = $correct;
             $new->depth = $question->depth;
             $new->sampling_question = $question->question;

@@ -17,14 +17,14 @@ class SamplingOptions extends Migration
         if (!Schema::hasTable('sampling_options')) {
             Schema::create('sampling_options', function (Blueprint $table) {
                 $table->increments('id');
-                $table->unsignedInteger('sampling_question_id');
+                $table->unsignedInteger('question_id');
                 $table->string('question_text');
                 $table->string('state');
                 $table->string('option');
                 $table->boolean('correct');
                 $table->timestamps();
 
-                $table->foreign('sampling_question_id')
+                $table->foreign('question_id')
                     ->references('id')->on('sampling_questions')
                     ->onDelete('cascade');
             });

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Curriculum;
 
 use App\Http\Controllers\AdminBaseController;
 use App\Objects\Knowledge;
+use App\Objects\Operator;
 use App\Objects\PathCategory;
 use App\Objects\PromptPath;
 use App\Objects\PromptSegment;
@@ -20,6 +21,60 @@ class PathsController extends AdminBaseController
             $this->nav = 'paths';
             return $next($request);
         });
+    }
+
+    public function getDemoPath(Request $request, $pathId)
+    {
+        Log::debug(__METHOD__);
+        $path = PromptPath::findOrFail($pathId);
+        $user = Auth::user();
+        $operator = $user->operator;
+        Log::debug($user);
+        if (empty($operator)) {
+            return $this->adminView('curriculum/path/demo', [
+                'title' => 'Connect your operator',
+                'nav' => 'paths',
+                'path' => $path
+            ]);
+        }
+        $this->message = $operator->startPathDemo($pathId);
+        return redirect()->action('Curriculum\PromptsController@viewPrompts', [
+            'pathId' => $pathId
+        ]);
+    }
+
+    public function postDemoPath(Request $request, $pathId)
+    {
+        Log::debug(__METHOD__);
+        $path = PromptPath::findOrFail($pathId);
+        $user = Auth::user();
+        $operator = $user->operator;
+        if (!empty($operator)) {
+            return $this->getDemoPath($request, $pathId);
+        }
+        $slack_user_id = $request->input('slack_user_id');
+        $operator = Operator::where('slack_user_id',$slack_user_id)->first();
+        if (empty($operator)) {
+            if (strlen($slack_user_id) > 0) {
+                $this->message = "There's no app operator with that slack user id in the system. Have you opted into the app after creating your slack account?";
+            }
+            return $this->getDemoPath($request, $pathId);
+        }
+        $code = md5($user->id);
+        $code = substr($code,8,2).'-'.substr($code,5,3).'-'.substr($code,2,2);
+        $operator->code = $code;
+        $operator->save();
+        $operator->sendSlackConnectUserForm($user->id);
+
+        $this->message = "Invitation to connect slack account sent! Check the app home in your Slack workspace.";
+
+        return $this->adminView('curriculum/path/connect', [
+            'title' => 'Connect your operator',
+            'code' => $operator->code,
+            'slack_user_id' => $slack_user_id,
+            'nav' => 'paths',
+            'path' => $path
+        ]);
     }
 
     public function missingPath($type)
@@ -73,6 +128,8 @@ class PathsController extends AdminBaseController
         }
         $levels = array_keys($path->getLevels());
         $levels = array_combine($levels, $levels);
+        Log::debug(__METHOD__);
+        Log::debug($path);
         return $this->adminView('curriculum/path/'.$view, [
             'path' => $path,
             'title' => $title,
@@ -124,15 +181,16 @@ class PathsController extends AdminBaseController
             if (strpos($label, 'knowledge_') !== false) {
                 $knowledges[] = $input;
             }
-            if ($label == 'new_knowledges') {
-                $knowledges = array_unique(array_merge($knowledges, explode(',', $input)));
-            }
         }
         $path->save();
         $path->editors()->attach($user, ['write_access' => true]);
         foreach ($knowledges as $knowledge) {
-            $know = Knowledge::firstOrNew(['name' => strtolower($knowledge)]);
-            $path->knowledges()->attach($know);
+            $know = Knowledge::where(['name' => strtolower($knowledge)])->first();
+            $know->save();
+            $has = $path->knowledges()->where('knowledge_id', $know->id)->first();
+            if (empty($has)) {
+                $path->knowledges()->attach($know);
+            }
         }
 
         return redirect()->action('Curriculum\PromptsController@getPrompts', [

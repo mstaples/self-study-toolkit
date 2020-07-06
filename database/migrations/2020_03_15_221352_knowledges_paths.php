@@ -14,7 +14,7 @@ class KnowledgesPaths extends Migration
     public function up()
     {
         Schema::create('knowledges_paths', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             $table->integer('path_id')->unsigned();
             $table->integer('knowledge_id')->unsigned();
             $table->timestamps();

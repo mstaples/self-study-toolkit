@@ -44,9 +44,19 @@ class PromptPath extends Model
         return $this->hasMany('App\Objects\Prompt');
     }
 
+    public function ordered_prompts()
+    {
+        return $this->prompts()->orderBy('prompt_path_step', 'asc');
+    }
+
     public function knowledges()
     {
         return $this->belongsToMany('App\Objects\Knowledge', 'knowledges_paths', 'path_id', 'knowledge_id');
+    }
+
+    public function travels()
+    {
+        return $this->hasMany('App\Objects\Travel');
     }
 
     public function getKnowledgeNames()
@@ -63,8 +73,14 @@ class PromptPath extends Model
     {
         $count = count($this->prompts);
         $steps = array_fill(1, $count, '');
+        $preamble = 'Make this Prompt #';
+        $ownedPreable = 'Keep this Prompt #';
         foreach ($this->prompts as $prompt) {
-            $title = $prompt->prompt_path_step . '. (' . $prompt->prompt_title . ')';
+            if ($prompt->prompt_path_step == $this->prompt_path_step) {
+                $title = $ownedPreable . $this->prompt_path_step;
+            } else {
+                $title = $preamble . $prompt->prompt_path_step;
+            }
             if (array_key_exists($prompt->prompt_path_step, $steps)
                 && $steps[$prompt->prompt_path_step] == '') {
                 $steps[$prompt->prompt_path_step] = $title;
@@ -75,7 +91,7 @@ class PromptPath extends Model
             foreach ($steps as $step => $label) {
                 $lastStep = $step;
                 if ($label === '') {
-                    $steps[$step] = $step . $title;
+                    $steps[$step] = $preamble . $step;
                     $prompt->prompt_path_step = $step;
                     $prompt->save();
                     continue 2;

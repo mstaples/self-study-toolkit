@@ -1,7 +1,13 @@
 
-@extends('layouts.empty')
+@extends('layouts.left')
 
 @section('title', $title)
+
+@if (!empty($path))
+    @include('component.block.path')
+@endif
+
+@section('sidebar')@endsection
 
 @section('content')
     <h2>Prompts</h2>

@@ -46,7 +46,22 @@ class UpdateSlackHome extends Command
     public function handle()
     {
         $json = $this->argument('json') === null ? $this->defaultHome() : $this->argument('json');
-        $json['user_id'] = config('services.slack.user_id');
+        if (array_key_exists('type', $json)) {
+            switch($json['type']) {
+                case 'demo path':
+                    $json = $this->initiatePathDemo($json);
+                    break;
+                case 'demo prompt':
+                    $json = $this->initiatePromptDemo($json);
+                    break;
+                case 'connect_editor_account':
+                    $json = $this->constructConnectUserJson($json);
+                    break;
+            }
+        }
+        if (!array_key_exists('user_id', $json)) {
+            $json['user_id'] = config('services.slack.user_id');
+        }
         //Log::debug('UpdateSlackHome json keys? '. implode(', ', array_keys($json)));
         Log::debug($json);
         $headers =  [
@@ -68,7 +83,7 @@ class UpdateSlackHome extends Command
             Log::debug($response);
             if (!array_key_exists('response_metadata',$response)
                 || !array_key_exists('messages',$response['response_metadata'])) {
-                var_dump($response);
+                //var_dump($response);
                 //Log::debug($response);
                 return;
             }

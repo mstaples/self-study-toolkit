@@ -5,7 +5,7 @@ namespace App\Objects;
 use App\Objects\FeedbackRecord;
 use App\Objects\Operator;
 use App\Objects\Prompt;
-use App\Objects\PromptResponse;
+use App\Objects\PromptSegmentResponse;
 use App\Objects\SamplingAnswer;
 use App\Objects\SamplingQuestion;
 use Illuminate\Database\Eloquent\Model;
@@ -14,10 +14,11 @@ use Illuminate\Support\Facades\Log;
 class SlackAction extends Model
 {
     /*
-     * block ids are constructed:
-     * [prompt] . prompt_category_id . prompt_path_id . prompt_id . segment
-     * [feedback] . feedback_request_id
-     * [sampling_question] . sampling_question_id . count
+     * block ids are constructed by App/Objects/Answer::getBlockId()
+     * block ids match the pattern: question_type .  question_id . answer_id
+     * [prompt_segment] . prompt_segment_id . prompt_segment_response_id
+     * [feedback_request] . feedback_request_id . feedback_response_id
+     * [sampling_question] . sampling_question_id . sampling_answer_id
      * */
     public $block_id;
     public $type;
@@ -30,7 +31,7 @@ class SlackAction extends Model
 
     public function buildAction($slackAction)
     {
-        //Log::debug($slackAction);
+        Log::debug($slackAction);
         $this->type = $slackAction['type'];
         if (array_key_exists('block_id', $slackAction)) {
             $this->block_id = $slackAction['block_id'];
@@ -56,16 +57,37 @@ class SlackAction extends Model
         return;
     }
 
-    public function getType()
+    public function getBlockType()
+    {
+        return $this->type;
+    }
+
+    public function getContentType()
     {
         $components = explode('.',$this->block_id);
         return $components[0];
     }
 
-    public function getId()
+    public function getContentId()
     {
         $components = explode('.',$this->block_id);
         return $components[1];
+    }
+
+    public function getAnswerId()
+    {
+        Log::debug($this->block_id);
+        $components = explode('.', $this->block_id);
+        return $components[2];
+    }
+
+    public function isSaveAction()
+    {
+        $components = explode('.', $this->block_id);
+        if (array_key_exists(3, $components) && $components[3] == 'save') {
+            return true;
+        }
+        return false;
     }
 
     public function getAssociatedId($type=null)
@@ -85,56 +107,104 @@ class SlackAction extends Model
 
     public function takeAction(Operator $operator)
     {
-        Log::debug(__METHOD__.': '.$this->getType());
-        switch($this->getType()) {
-            case 'sampling_question':
-                $samplingQuestionId = $this->getId();
-                $question = SamplingQuestion::find($samplingQuestionId);
-                $option = SamplingOption::find($this->value);
-
-                $action = new SamplingAnswer();
-                $action->sampling_question_id = $samplingQuestionId;
-                $action->question_text = $question->question;
-                $action->answer = $option->option;
-                $action->correct = $option->correct;
-                $action->depth = $question->depth;
-                $action->operator()->associate($operator);
-                $action->save();
-
-                return $operator->needsAQuestion();
-                break;
-            case 'prompt':
-                $promptId = $this->getAssociatedId('prompt');
-                $prompt = Prompt::find($promptId);
-
-                $action = new PromptResponse();
-                $action->prompt_id = $promptId;
-                $action->prompt_title = $prompt->prompt_title;
-                $action->response = $this->value;
-                $action->save();
-                break;
-            case 'feedback':
-                $feedbackRequestId = $this->getAssociatedId();
-                $request = SamplingQuestion::find($feedbackRequestId);
-
-                $action = new FeedbackRecord();
-                $action->feedback_request_id = $feedbackRequestId;
-                $action->feedback_request = $request->request;
-                $action->record = $this->value;
-                $action->save();
-                break;
-            case 'preferences':
-                if ($this->value == 'save') {
-                    return false;
+        $answers = [ 'sampling_question', 'prompt_segment', 'feedback_request' ];
+        $contentType = $this->getContentType();
+        Log::debug(__METHOD__.': '.$contentType);
+        if (in_array($contentType, $answers)) {
+            $answerId = $this->getAnswerId();
+            if ($answerId == 'next') {
+                $travel = $operator->getCurrentTravel();
+                if (empty($travel)) {
+                    Log::debug("takeAction answerId next but no current travel found. replay path");
+                    return 'replay';
                 }
-                Log::debug(__METHOD__.': set preferences : '.$this->getId());
-                Log::debug($this->value);
-                $operator->preferences[$this->getId()] = $this->value;
-                $operator->save();
-
-                return false;
-                break;
+                $travel->completed_segments += 1;
+                $travel->save();
+                return 'segment';
+            }
+            $answer = $operator->retrieveAnswer($contentType, $answerId);
+            Log::debug($answer);
+            if ($this->isSaveAction()) {
+                Log::debug(__METHOD__.": return saveAnswer()");
+                return $answer->saveAnswer($operator);
+            }
+            Log::debug(__METHOD__.": return answerQuestion()");
+            return $answer->answerQuestion($this->getBlockType(), $answer, $this->value);
         }
-        return false;
+        switch($contentType) {
+            case 'preferences':
+                $preferenceAction = $this->getContentId();
+                switch($preferenceAction) {
+                    case 'review':
+                        return "preferences";
+                    case 'user':
+                        Log::debug("Slack user attempting to connect curriculum editor account. ");
+                        $connecting_user_id = $this->getAnswerId();
+                        $connecting_code = $this->value;
+                        Log::debug("operator->connectUser($connecting_user_id, $connecting_code)");
+                        $operator->connectUser($connecting_user_id, $connecting_code);
+                        return 'preferences';
+                    case 'topics':
+                    case 'frequency':
+                        if (!is_array($this->value)) {
+                            $preference = $operator->preferences()->where('type', $preferenceAction)->first();
+                            if (!empty($preference)) {
+                                $preference->name = $this->value;
+                                $preference->save();
+                                return 'preferences';
+                            }
+                            $preference = new Preference([
+                                'type' => $preferenceAction,
+                                'name' => $this->value
+                            ]);
+                            $operator->preferences()->save($preference);
+                            $preference->save();
+                            return 'preferences';
+                        }
+                        $preferences = $operator->preferences()->where('type', $preferenceAction)->get();
+                        foreach ($preferences as $preference) {
+                            if (!in_array($preference->name, $this->value)) {
+                                $preference->delete();
+                                continue;
+                            }
+                            $key = array_search($preference->name, $this->value);
+                            unset($this->value[$key]);
+                        }
+                        if (!empty($this->value)) {
+                            foreach ($this->value as $new) {
+                                $preference = new Preference();
+                                $preference->type = $preferenceAction;
+                                $preference->name = $new;
+                                $operator->preferences()->save($preference);
+                                $preference->save();
+                            }
+                        }
+                        return 'preferences';
+                    case 'done':
+                        return $operator->needsAQuestion();
+                    default:
+                        if ($this->value = 'save') {
+                            Log::debug(__METHOD__.": return needsAQuestion()");
+                            return $operator->needsAQuestion();
+                        }
+                }
+                break;
+            case 'path':
+            $id = $this->value[0];
+            $path = PromptPath::find($id);
+            if (empty($path)) {
+                Log::debug("Path action supplied id \"$id\" but no such path exists.");
+                return 'wait';
+            }
+            //'operator_id', 'path_id', 'completed', 'completed_at', 'level', 'notebook'
+            $travel = new Travel();
+            $travel->level = $path->path_level;
+            $operator->travels()->save($travel);
+            $path->travels()->save($travel);
+            $travel->save();
+
+            return 'prompt';
+        }
+        return 'wait';
     }
 }
