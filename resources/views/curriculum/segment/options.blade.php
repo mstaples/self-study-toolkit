@@ -38,7 +38,7 @@
             <button type="button" class="btn btn-primary btn-secondary btn-block"
                     onclick="submitSegmentForm(
                         '{{ url('curriculum/segments/edit/' . ($segment->id.'/'.$index)) }}',
-                        '{{ $prompt->id }}',
+                        '{{ $prompt_id }}',
                         '{{ $index }}')">
                 <i class="far fa-save"></i>
                 Save
@@ -61,5 +61,4 @@
             </button>
         @endif
     </div>
-
 </div>

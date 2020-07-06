@@ -1,6 +1,12 @@
 
-@include('curriculum.segment.options', [ 'index' => $index, 'segment' => $segment, 'last' => $last ])
-<div class="card alert-info m-2 collapse" id="segment{{ $index }}">
+@include('curriculum.segment.options', [
+    'index' => $index,
+    'segment' => $segment,
+    'prompt_id' => $segment->prompt->prompt_id,
+    'last' => $last
+    ])
+
+<div class="card alert-info m-2 collapse" id="segment-{{ $index }}">
     <div class="card-body">
     {{ Form::hidden('question_id'.$index, $segment->id) }}
     {{ Form::label('segment_title'.$index, "Segment title*: ") }}

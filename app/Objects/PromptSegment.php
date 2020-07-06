@@ -67,64 +67,50 @@ class PromptSegment extends Question
         return strlen($string) < 2 ? '' : $string;
     }
 
-    public function moveOrderEarlier()
+    public function getOrderedSegmentTitles()
     {
-        $currentOrder = (int) $this->prompt_segment_order;
-        Log::debug(__METHOD__.': '.$this->segment_title.' current prompt segment order: '.$currentOrder);
-        $newOrder = (int) $currentOrder - 1;
-        Log::debug(__METHOD__.': attempting to set new segment order: '.$newOrder);
-        if ($newOrder < 1 || $newOrder > $this->prompt->prompt_segments_count) {
-            Log::debug(__METHOD__.": $newOrder either < 1 or > limit: ".$this->prompt->prompt_segments_count);
-            return false;
+        $prompt = $this->prompt;
+        $segments = $prompt->ordered_segments;
+        Log::debug(__METHOD__.": prompt->ordered_segments");
+        $ordered = [];
+        $i = 0;
+        foreach ($segments as $segment) {
+            Log::debug("$segment->segment_title: $segment->prompt_segment_order");
+            $i++;
+            $update = $i != $segment->prompt_segment_order ? true : false;
+            $ordered[$i] = $segment->segment_title;
+            if ($update) {
+                $segment->prompt_segment_order = $i;
+                $segment->save();
+            }
         }
-        return $this->updatePromptSegmentOrder($newOrder);
-    }
-
-    public function moveOrderLater()
-    {
-        Log::debug(__METHOD__.': '.$this->segment_title.' current prompt segment order: '.$this->prompt_segment_order);
-        $order = (int) $this->prompt_segment_order + 1;
-        if ($order < 1 || $order > $this->prompt->prompt_segments_count) {
-            return false;
-        }
-        return $this->updatePromptSegmentOrder($order);
+        return $ordered;
     }
 
     public function updatePromptSegmentOrder($order)
     {
-        Log::debug(__CLASS__.': '.__METHOD__.': with order = '.$order);
+        $ordered = $this->getOrderedSegmentTitles();
         if ($order == $this->prompt_segment_order) return true;
-        $up = $order > $this->prompt_segment_order ? false : true;
-        $options = $this->prompt->getSegmentOrderOptions(false);
-        if (!array_key_exists($order, $options)) {
+        if (!array_key_exists($order, $ordered)) {
             Log::debug(__CLASS__.__METHOD__." provided invalid order option = $order");
             return false;
         }
-        $segments = $this->prompt->ordered_segments;
-        foreach ($segments as $segment) {
-            if ($segment->id == $this->id) {
-                $segment->prompt_segment_order = $order;
-                $segment->save();
-                continue;
-            }
-            if ($segment->prompt_segment_order == $order) {
-                $shift = $up ? $order + 1 : $order - 1;
-                $segment->prompt_segment_order = $shift;
-                $segment->save();
-                continue;
-            }
-            if ($segment->prompt_segment_order > $order) {
-                $segment->prompt_segment_order = $segment->prompt_segment_order + 1;
-                $segment->save();
-            }
+        if ($order > $this->prompt_segment_order + 1 || $order < $this->prompt_segment_order - 1) {
+            Log::debug(__CLASS__.__METHOD__." provided invalid order option more than one step different than current order.");
+            return false;
         }
+        $prompt = $this->prompt;
+        $swapSegment = $prompt->prompt_segments()->where('prompt_segment_order', $order)->first();
+        Log::debug("Swap order with segment ".$swapSegment->segment_title);
+        $swapSegment->prompt_segment_order = $this->prompt_segment_order;
+        $swapSegment->save();
+        $this->prompt_segment_order = $order;
+        $this->save();
         return true;
     }
+
     public function save($options = [])
     {
-        Log::debug(__CLASS__." save()");
-        Log::debug("title: ".$this->segment_title);
-        Log::debug("order: ".$this->prompt_segment_order);
         parent::save($options);
     }
 

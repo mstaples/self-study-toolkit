@@ -1,11 +1,9 @@
-@foreach ($segments as $segment)
-    <div id="segment-{{ $loop->iteration }}" class="prompt-{{ $segment->prompt->prompt_id }}-segment">
-        @include('curriculum.segment.options', [
-            'index' => $loop->iteration,
-            'segment' => $segment,
-            'prompt_id' => $segment->prompt->prompt_id,
-            'last' => $loop->last
-            ])
-        <hr/>
-    </div>
-@endforeach
+<div id="all-segments">
+    @foreach ($segments as $segment)
+        <div id="segment-{{ $loop->iteration }}" class="prompt-{{ $prompt_id }}-segment">
+            @include('curriculum.segment.edit', [ 'index' => $loop->iteration, 'segment' => $segment,'last' => $loop->last, 'accessory' => $segment->getAccessory() ])
+            <hr/>
+        </div>
+    @endforeach
+    @include('curriculum.segment.new', [ 'prompt_id' => $prompt_id ])
+</div>

@@ -1,6 +1,6 @@
 @include('curriculum.segment.options', [
     'index' => 0,
-    'prompt_id' => $prompt->id,
+    'prompt_id' => $prompt_id,
     'segment' => 'new',
     'last' => true
     ])

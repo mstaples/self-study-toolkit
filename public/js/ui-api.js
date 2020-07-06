@@ -29,10 +29,12 @@ function submitSegmentForm(route, prompt_id, index) {
             if (responseCode === 'success') {
                 console.log("reload #segment-" + index);
                 if (index === '0') {
-                    var newIndex = $('.prompt-'+ prompt_id +'-segment').length;
+                    let newIndex = $('.prompt-'+ prompt_id +'-segment').length;
+                    console.log("new segment = #segment-" + newIndex);
                     $( "#segment-0" )
                         .before( "<div id='segment-"+newIndex+"' class='prompt-"+prompt_id+"-segment'></div>" );
                     $( "#segment-" + newIndex ).html(data);
+                    console.log("update content of #segment-0");
                     updateContent(route, 'segment-0');
                 } else {
                     $( "#segment-" + index ).empty().html(data);

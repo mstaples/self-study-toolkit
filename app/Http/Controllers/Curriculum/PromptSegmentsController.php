@@ -123,38 +123,50 @@ class PromptSegmentsController extends AdminBaseController
 
     public function upSegment(Request $request, $segmentId)
     {
-        Log::debug(__METHOD__.': '.$this->segmentId);
         $segment = PromptSegment::find($this->segmentId);
-        Log::debug($segment);
-        $result = $segment->moveOrderEarlier();
+        Log::debug(__METHOD__.': '.$segment->segment_title);
+        $was = $segment->prompt_segment_order;
+        $new = $was - 1;
+        $result = $segment->updatePromptSegmentOrder($new);
         $title = $segment->segment_title;
         if ($result) {
-            $this->message = "Segment $title moved earlier";
+            $this->message = "Segment $title moved earlier from $was to $new";
         } else {
-            $this->message = "Unable to move segment $title earlier";
+            $this->message = "Unable to move segment $title earlier from $was to $new";
         }
         Log::debug($this->message);
+        $segment = PromptSegment::find($this->segmentId);
         $prompt = $segment->prompt;
         $segments = $prompt->ordered_segments;
-        return $this->adminView('curriculum/segment/all', [ 'segments' => $segments, 'path' => $this->path ]);
+        return $this->adminView('curriculum/segment/all', [
+            'segments' => $segments,
+            'path' => $this->path,
+            'prompt_id' => $prompt->id
+        ]);
     }
 
     public function downSegment(Request $request, $segmentId)
     {
-        Log::debug(__METHOD__.': '.$segmentId);
         $segment = PromptSegment::find($segmentId);
-        Log::debug($segment);
-        $result = $segment->moveOrderLater();
+        Log::debug(__METHOD__.': '.$segment->segment_title);
+        $was = $segment->prompt_segment_order;
+        $new = $was + 1;
+        $result = $segment->updatePromptSegmentOrder($new);
         $title = $segment->segment_title;
         if ($result) {
-            $this->message = "Segment $title moved later";
+            $this->message = "Segment $title moved later from position $was to $new";
         } else {
-            $this->message = "Unable to move segment $title later";
+            $this->message = "Unable to move segment $title later from position $was to $new";
         }
         Log::debug($this->message);
+        $segment = PromptSegment::find($this->segmentId);
         $prompt = $segment->prompt;
         $path = $prompt->prompt_path;
         $segments = $prompt->ordered_segments;
-        return $this->adminView('curriculum/segment/all', [ 'segments' => $segments, 'path' => $path ]);
+        return $this->adminView('curriculum/segment/all', [
+            'segments' => $segments,
+            'path' => $path,
+            'prompt_id' => $prompt->id
+        ]);
     }
 }

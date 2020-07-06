@@ -33,15 +33,7 @@
             {{ Form::checkbox('optional', 'true', $prompt->optional) }}<br/>
         <hr/>
             <p>Prompts are broken up into concise segments. Define 1 to 5 segments for this prompt:</p>
-            <div id="all-segments">
-                @foreach ($segments as $segment)
-                    <div id="segment-{{ $loop->iteration }}" class="prompt-{{ $prompt->id }}-segment">
-                        @include('curriculum.segment.edit', [ 'index' => $loop->iteration, 'segment' => $segment,'last' => $loop->last, 'accessory' => $segment->getAccessory() ])
-                        <hr/>
-                    </div>
-                @endforeach
-            </div>
-            @include('curriculum.segment.new')
+            @include('curriculum.segment.all', [ 'prompt_id' => $prompt->id ])
             {{ Form::label('key', "*Required") }}<br/>
         @endsection
 
