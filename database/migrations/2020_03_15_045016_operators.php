@@ -18,7 +18,7 @@ class Operators extends Migration
             $table->increments('id');
             $table->unsignedInteger('user_id')->unique()->nullable();
             $table->string('slack_user_id')->unique();
-            $table->string('name');
+            $table->string('name')->nullable();
             $table->string('nickname')->nullable();
             $table->string('code')->nullable();
             $table->boolean('opt_in')->nullable();

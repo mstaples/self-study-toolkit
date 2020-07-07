@@ -12,18 +12,36 @@ class SlackController extends Controller
 {
     use SlackApiTrait;
 
+    public function visitHomeEvent(Request $request)
+    {
+        $body = $request->toArray();
+        Log::debug($body);
+        $operator = Operator::where('slack_user_id', $body['event']['user'])->first();
+        if (empty($operator)) {
+            $operator = new Operator();
+            $operator->slack_user_id = $body['event']['user'];
+            $operator->save();
+        }
+        if (!$operator->opt_in) {
+            $this->setDefaultHomeTab();
+            $json = $this->defaultView;
+            $json['user_id'] = $operator->slack_user_id;
+        } else {
+            $json = $this->nextSegment($operator);
+        }
+        Artisan::call('update:slack-home', [
+            'json' => $json
+        ]);
+    }
+
     public function actions(Request $request)
     {
         $body = $request->toArray();
         $body = json_decode($body['payload'], true);
         $user = $body['user'];
         $operator = $this->retrieveOperator($user);
-        if (!$operator->opt_in) {
-            $this->setDefaultHomeTab();
-            $json = $this->defaultView;
-            $json['user_id'] = $operator->slack_user_id;
-            return $json;
-        }
+        $operator->name = $user['name'];
+        $operator->save();
         Log::debug(__METHOD__.':'.__LINE__);
         Log::debug($operator->preferences);
         $type = $body['type'];
@@ -47,9 +65,6 @@ class SlackController extends Controller
                         $json = $this->parseAction($operator, $action);
                     }
                 }
-                break;
-            case 'app_home_opened':
-                $json = $this->parseAction($operator, "done.refresh.home");
                 break;
             case 'shortcut':
             case 'message_actions':
