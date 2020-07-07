@@ -113,11 +113,20 @@ class PromptSegmentsController extends AdminBaseController
 
     public function deleteSegment(Request $request, $segmentId)
     {
+        $segment = PromptSegment::find($segmentId);
         Log::debug(__CLASS__.': '.__METHOD__.': '.$this->segment->segment_title);
-        $title = $this->segment->segment_title;
-        $this->segment->delete();
+        $prompt_id = $segment->prompt_id;
+        $title = $segment->segment_title;
+        $segment->delete();
 
         $this->message = "Deleted segment \"$title\"";
+        $prompt = Prompt::find($prompt_id);
+        $segments = $prompt->ordered_segments;
+        return $this->adminView('curriculum/segment/all', [
+            'segments' => $segments,
+            'path' => $prompt->prompt_path,
+            'prompt_id' => $prompt_id
+        ]);
         return $this->adminView('component/message');
     }
 

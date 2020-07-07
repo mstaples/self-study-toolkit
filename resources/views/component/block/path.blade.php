@@ -13,7 +13,9 @@
             @endforeach
         </ul>
         <hr/>
-        <h4><button url="{{ url('curriculum/path/demo/'.$path->id) }}" type="button" class="btn btn-info btn-update">
+        <h4>
+            <button onclick="location.href='{{ url('/curriculum/path/demo/'.$path->id) }}'"
+                 type="button" class="btn btn-info btn-update">
             Demo path in Slack
         </button></h4>
     </section>

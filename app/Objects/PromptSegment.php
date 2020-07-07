@@ -20,7 +20,7 @@ class PromptSegment extends Question
     public $elements = [];
 
     public $fillable = [
-        'segment_title', 'segment_text', 'segment_type', 'segment_imageUrl', 'segment_url',
+        'segment_title', 'segment_text', 'segment_type', 'segment_image_url', 'image_alt_text', 'segment_url',
         'segment_accessory', 'segment_elements', 'prompt_segment_order', 'accessory_type' ];
     protected $casts = [
         'segment_accessory' => 'array',
@@ -111,6 +111,14 @@ class PromptSegment extends Question
 
     public function save($options = [])
     {
+        if ($this->segment_image_url ||
+            (array_key_exists('segment_image_url', $options) && strlen($options['segment_image_url']) > 3)) {
+            if (!$this->image_alt_text ||
+                (array_key_exists('image_alt_text', $options) && strlen($options['image_alt_text']) < 3)) {
+                Log::debug("Not saving PromptSegment - Image alt text is required when image url is set.");
+                return false;
+            }
+        }
         parent::save($options);
     }
 

@@ -17,7 +17,7 @@ class PromptPathsTableSeeder extends Seeder
             $new->segment_title = $segment['title'];
             $new->segment_text = $segment['text'];
             $new->segment_type = $segment['type'];
-            $new->segment_imageUrl = $segment['imageUrl'];
+            $new->segment_image_url = $segment['imageUrl'];
             $new->segment_url = $segment['url'];
             $new->prompt_segment_order = $key;
             $new->prompt_id = $prompt->id;

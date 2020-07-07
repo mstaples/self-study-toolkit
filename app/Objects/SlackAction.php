@@ -132,6 +132,8 @@ class SlackAction extends Model
             return $answer->answerQuestion($this->getBlockType(), $answer, $this->value);
         }
         switch($contentType) {
+            case 'demo':
+                return $this->block_id;
             case 'preferences':
                 $preferenceAction = $this->getContentId();
                 switch($preferenceAction) {
@@ -189,6 +191,8 @@ class SlackAction extends Model
                         }
                 }
                 break;
+            case 'done':
+                return $operator->needsAQuestion();
             case 'path':
             $id = $this->value[0];
             $path = PromptPath::find($id);

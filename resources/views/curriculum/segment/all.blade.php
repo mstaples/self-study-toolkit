@@ -5,5 +5,8 @@
             <hr/>
         </div>
     @endforeach
-    @include('curriculum.segment.new', [ 'prompt_id' => $prompt_id ])
+    <div id="segment-0" class="prompt-{{ $prompt_id }}-segment">
+        @include('curriculum.segment.new', [ 'prompt_id' => $prompt_id ])
+        <hr/>
+    </div>
 </div>

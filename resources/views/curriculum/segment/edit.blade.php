@@ -1,12 +1,10 @@
-
 @include('curriculum.segment.options', [
     'index' => $index,
     'segment' => $segment,
     'prompt_id' => $segment->prompt->prompt_id,
     'last' => $last
     ])
-
-<div class="card alert-info m-2 collapse" id="segment-{{ $index }}">
+<div class="card alert-info m-2 collapse" id="segment{{ $index }}">
     <div class="card-body">
     {{ Form::hidden('question_id'.$index, $segment->id) }}
     {{ Form::label('segment_title'.$index, "Segment title*: ") }}
@@ -17,7 +15,9 @@
     {{ Form::label('segment_url'.$index, "Segment url: ") }}
     {{ Form::text('segment_url'.$index, $segment->segment_url) }}<br/>
     {{ Form::label('segment_url'.$index, "Segment image url: ") }}
-    {{ Form::text('segment_image_url'.$index, $segment->segment_imageUrl) }}<br/>
+    {{ Form::text('segment_image_url'.$index, $segment->segment_image_url) }}<br/>
+    {{ Form::label('image_alt_text'.$index, "Image alt text: ") }}
+    {{ Form::text('image_alt_text'.$index, $segment->image_alt_text) }}<br/>
     {{ Form::label('segment_accessory_text'.$index, "Segment interaction label: ") }}
     {{ Form::text('segment_accessory_text'.$index, $accessory['text']['text']) }}<br/>
     {{ Form::label('segment_options'.$index, "All Options: ") }}

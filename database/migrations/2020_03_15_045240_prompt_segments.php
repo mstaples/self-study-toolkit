@@ -24,7 +24,8 @@ class PromptSegments extends Migration
                 $table->string('segment_title');
                 $table->string('segment_type');
                 $table->string('accessory_type');
-                $table->string('segment_imageUrl')->nullable();
+                $table->string('segment_image_url')->nullable();
+                $table->string('image_alt_text')->nullable();
                 $table->string('segment_url')->nullable();
                 $table->text('segment_text')->nullable();
                 $table->json('segment_elements')->nullable();

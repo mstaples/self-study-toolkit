@@ -36,9 +36,11 @@ Route::prefix('curriculum')->group(function(){
     Route::get('prompts/{pathId?}', 'Curriculum\PromptsController@getPrompts');
     Route::post('prompts/{pathId}', 'Curriculum\PromptsController@postPrompts');
     Route::any('prompts/view/{pathId}', 'Curriculum\PromptsController@viewPrompts');
-    Route::post('prompt/demo/{promptId}', 'Curriculum\PromptsController@postDemoPrompt');
-    Route::post('prompt/create/{pathId}', 'Curriculum\PromptsController@createPrompt');
-    Route::post('prompt/edit/{pathId}/{promptId}', 'Curriculum\PromptsController@editPrompt');
+
+    Route::any('prompt/demo/{promptId}', 'Curriculum\PromptController@anyDemoPrompt');
+    Route::post('prompt/create/{pathId}', 'Curriculum\PromptController@createPrompt');
+    Route::post('prompt/edit/{pathId}/{promptId}', 'Curriculum\PromptController@editPrompt');
+    Route::any('prompt/{pathId}/{promptId}', 'Curriculum\PromptController@postPrompt');
 // Segments
     Route::get('segments', function () {
         return redirect()->action('Curriculum\PathsController@missingPath', [ 'type' => 'segments' ]);

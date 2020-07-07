@@ -1,7 +1,6 @@
 @section('sidebar')
     <section class="box">
-        <h4><button
-                url="{{ url('curriculum/prompt/demo/'.$prompt->id) }}"
+        <h4><button onclick="location.href='{{ url('/curriculum/prompt/demo/'.$prompt->id) }}'"
                 type="button"
                 class="btn btn-info btn-update"
             >

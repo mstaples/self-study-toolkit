@@ -26,11 +26,13 @@
         <li @if(\Request::is('register'))class="current"@endif><a href="{{ route('register') }}">Register</a></li>
     @endif
 </ul>
-    @isset ($message)
-        @if (strlen($message) > 1)
-            <div class="alert alert-primary" role="{{ $message_role }}">
-                <p>{{ $message }}</p>
-            </div>
-        @endif
-    @endisset
+    <div id="banner-message">
+        @isset ($message)
+            @if (strlen($message) > 1)
+                <div class="alert alert-primary" role="{{ $message_role }}">
+                    <p>{{ $message }}</p>
+                </div>
+            @endif
+        @endisset
+    </div>
 </div>

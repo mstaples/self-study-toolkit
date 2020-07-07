@@ -17,8 +17,8 @@ class AdminBaseController extends BaseController
 
     public $message = '';
     public $message_role = 'info';
-    public $promptId = '';
     public $pathId = '';
+    public $promptId = '';
     public $segmentId = '';
     public $questionId = '';
     public $nav = '';

@@ -3,7 +3,7 @@
     'prompt_id' => $prompt_id,
     'segment' => 'new',
     'last' => true
-    ])
+])
 <div class="card alert-info m-2 collapse" id="segment0">
     <div class="card-body">
         <h2>Add a new segment</h2>
@@ -14,8 +14,10 @@
 {{ Form::select('accessory_type0', $path->getInteractionOptions() ) }}<br/>
 {{ Form::label('segment_url0', "Segment url (optional):") }}
 {{ Form::text('segment_url0') }}<br/>
-{{ Form::label('segment_url0', "Segment image url (optional):") }}
-{{ Form::text('segment_imageUrl0') }}<br/>
+{{ Form::label('segment_image_url0', "Segment image url (optional):") }}
+{{ Form::text('segment_image_url0') }}<br/>
+{{ Form::label('image_alt_text0', "Image alt text:") }}
+{{ Form::text('image_alt_text0') }}<br/>
 {{ Form::label('segment_accessory_text0', "Segment interaction label (optional): ") }}
 {{ Form::text('segment_accessory_text0' ) }}<br/>
 {{ Form::label('segment_accessory_options0', 'All Options (optional):') }}
