@@ -16,13 +16,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::post('slack/events', function (Request $request) {
-    $challenge = $request->challenge;
-    var_dump($challenge);
-    return response()->json([
-        'challenge' => $challenge
-    ]);
-});
+Route::post('slack/events', 'SlackController@actions');
 
 Route::post('slack/menus', function (Request $request) {
     $challenge = $request->challenge;
