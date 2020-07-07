@@ -294,6 +294,26 @@ trait SlackApiTrait
         return $operator;
     }
 
+    public function createHomeView($operator)
+    {
+        $this->setDefaultHomeTab();
+        $view = $this->defaultView;
+        $view['view']['blocks'] = [];
+        $view['view']['blocks'][] = $this->createRefreshHomeBlock();
+
+        $prompt = Prompt::findOrFail($promptId);
+        $segment = $prompt->prompt_segments()->where('prompt_segment_order', $step)->first();
+        if (!$segment) {
+            $message = "You have walked through all of the currently available segments for this prompt.";
+            $view['view']['blocks'][] = $this->createMessageBlock($message);
+            $view['view']['blocks'][] = [ 'type' => 'divider' ];
+            return $view;
+        }
+        $view = $this->createSegmentView($operator, $segment, true);
+
+        return $view;
+    }
+
     public function createSegmentView(Operator $operator, PromptSegment $segment, $demo = false)
     {
         Log::debug(__METHOD__);
