@@ -294,26 +294,6 @@ trait SlackApiTrait
         return $operator;
     }
 
-    public function createHomeView($operator)
-    {
-        $this->setDefaultHomeTab();
-        $view = $this->defaultView;
-        $view['view']['blocks'] = [];
-        $view['view']['blocks'][] = $this->createRefreshHomeBlock();
-
-        $prompt = Prompt::findOrFail($promptId);
-        $segment = $prompt->prompt_segments()->where('prompt_segment_order', $step)->first();
-        if (!$segment) {
-            $message = "You have walked through all of the currently available segments for this prompt.";
-            $view['view']['blocks'][] = $this->createMessageBlock($message);
-            $view['view']['blocks'][] = [ 'type' => 'divider' ];
-            return $view;
-        }
-        $view = $this->createSegmentView($operator, $segment, true);
-
-        return $view;
-    }
-
     public function createSegmentView(Operator $operator, PromptSegment $segment, $demo = false)
     {
         Log::debug(__METHOD__);
@@ -324,6 +304,7 @@ trait SlackApiTrait
         $view['user_id'] = $user_id;
         $view['view']['blocks'] = [];
         $view['view']['blocks'][] = $this->createPromptBlock($segment->prompt);
+        $view['view']['blocks'][] = [ 'type' => 'divider' ];
 
         $title = $segment->segment_title;
         $description = $segment->segment_text;
@@ -336,6 +317,9 @@ trait SlackApiTrait
         if ($demo) {
             $block_id = 'demo.' . $prompt->id . '.' . $segment->prompt_segment_order;
         }
+        if (strlen($url) > 3) {
+            $description = $description .' ' . $url;
+        }
         Log::debug("createSegmentView block id = " . $block_id . " and demo == " . $demo);
 
         switch($type) {
@@ -345,7 +329,7 @@ trait SlackApiTrait
                 return $view;
                 break;
             case 'image':
-                $message = '*' . $title . "* \n _" . $description . '_';
+                $message = '*' . $title . "* \n " . $description;
                 $view['view']['blocks'][] = $this->createImageBlock($block_id, $image, $alt_text, $message);
                 $block_id = $block_id . '.next';
                 $view['view']['blocks'][] = $this->createButtonBlock($block_id, ' ', 'next', 'next');
@@ -355,7 +339,7 @@ trait SlackApiTrait
                 $answer = $segment->prepareNewQuestionAnswer($operator);
                 $block_id = $answer->getBlockId();
                 $label = "Select any answers you think make sense:";
-                $message = '*' . $title . "* \n _" . $description . '_';
+                $message = '*' . $title . "* \n " . $description;
                 $view['view']['blocks'][] = $this->createMessageBlock($message);
                 $view['view']['blocks'][] = $this->createCheckboxesBlock($block_id, $label, $answer->available_options);
                 $view['view']['blocks'][] = $this->createButtonBlock($block_id.'.save', 'Done with selection', 'save', 'save');
@@ -365,7 +349,7 @@ trait SlackApiTrait
                 $answer = $segment->prepareNewQuestionAnswer($operator);
                 $block_id = $answer->getBlockId();
                 $label = " ";
-                $message = '*' . $title . "* \n _" . $description . '_';
+                $message = '*' . $title . "* \n " . $description;
                 $view['view']['blocks'][] = $this->createMessageBlock($message);
                 $view['view']['blocks'][] = $this->createRadioButtonsBlock($block_id, $label, $answer->available_options);
                 return $view;
