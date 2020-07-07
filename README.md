@@ -93,6 +93,8 @@ Please, do all development in a separate branch named for a specific development
 Be sure to pull down and integrate changes from the master branch before making new commits.
 
 ### TODO
-- Prompt delivery
+- Sharing paths with other editors
+- Ability to review and update path status
+- Path status preference for operators
 - Feedback request delivery
 - Feedback record

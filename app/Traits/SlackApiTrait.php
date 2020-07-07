@@ -493,7 +493,13 @@ trait SlackApiTrait
                 $selected[$id] = $option['option'];
             }
         }
-        return [ 'options' => $options, 'initial_options' => $selected ];
+        $ids = array_keys($options);
+        shuffle($ids);
+        $random = [];
+        foreach ($ids as $id) {
+            $random[$id] = $options[$id];
+        }
+        return [ 'options' => $random, 'initial_options' => $selected ];
     }
 
     public function createSamplingQuestionView($answer, $user_id)
