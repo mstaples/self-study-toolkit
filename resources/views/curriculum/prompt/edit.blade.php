@@ -15,12 +15,7 @@
                 {{ Form::select('prompt_step', $path->getSteps(), $prompt->prompt_path_step ) }}
                 <br/><br/>
                 {{ Form::submit('Save and ', [ 'class' => 'btn btn-success btn-block' ]) }}
-                {{ Form::select('next', [
-                        'stay' => 'Stay here',
-                        'prompts' => 'select a prompt',
-                        'paths' => 'select a path',
-                        'questions' => 'view knowledges and questions'
-                        ], 'stay' ) }}
+                {{ Form::select('next', $next, 'stay' ) }}
             </section>
         @endsection
 

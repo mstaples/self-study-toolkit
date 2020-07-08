@@ -39,7 +39,7 @@ function submitSegmentForm(route, prompt_id, index) {
                     console.log("new segment = #segment-" + newIndex);
                     $( "#segment-0" )
                         .before( "<div id='segment-"+newIndex+"' class='prompt-"+prompt_id+"-segment'></div>" );
-                    $( "#segment-" + newIndex ).replaceWith(data);
+                    $( "#segment-" + newIndex ).html(data);
                 } else {
                     $( "#segment-" + index ).empty().html(data);
                 }
@@ -67,7 +67,11 @@ function submitOption(route, formId, divId) {
         success: function( data, responseCode ) {
             if (responseCode === 'success') {
                 console.log(divId);
-                $( "#" + divId ).empty().html(data);
+                if (divId == 'all-segments') {
+                    $( "#" + divId ).replaceWith(data);
+                } else {
+                    $( "#" + divId ).empty().html(data);
+                }
             } else {
                 alert(responseCode);
             }
@@ -83,7 +87,11 @@ function updateContent(route, div) {
         success: function( data, responseCode ) {
             if (responseCode === 'success') {
                 console.log(div);
-                $( "#" + div ).empty().html(data);
+                if (div == 'all-segments') {
+                    $( "#" + div ).replaceWith(data);
+                } else {
+                    $( "#" + div ).empty().html(data);
+                }
             } else {
                 alert(responseCode);
             }
@@ -91,8 +99,8 @@ function updateContent(route, div) {
     });
 }
 
-function deleteContent(route, name, div) {
-    if (confirm("Are you sure you want to delete: "+name+"?")) {
+function deleteContent(route, div) {
+    if (confirm("Are you sure you want to delete this segment?")) {
         updateContent(route, div);
     }
 }

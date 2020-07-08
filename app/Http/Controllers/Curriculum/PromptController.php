@@ -82,6 +82,7 @@ class PromptController extends AdminBaseController
             'title' => $title,
             'prompt' => $prompt,
             'segments' => $segments,
+            'next' => $this->nextPromptOptions($pathId),
             'nav' => 'segments'
         ]);
     }
@@ -97,6 +98,8 @@ class PromptController extends AdminBaseController
         $prompt->save();
 
         switch($request->input('next')) {
+            case 'editors':
+                return redirect()->action('Curriculum\EditorsController@getEditors', [ 'pathId' => $pathId ]);
             case 'questions':
                 return redirect()->action('Curriculum\SamplingQuestionsController@getSamplingQuestions');
             case 'prompts':
@@ -112,6 +115,7 @@ class PromptController extends AdminBaseController
                 'title' => $title,
                 'prompt' => $prompt,
                 'segments' => $prompt->ordered_segments,
+                'next' => $this->nextPromptOptions($pathId),
                 'nav' => 'prompts'
             ]);
         }
@@ -147,8 +151,25 @@ class PromptController extends AdminBaseController
             'title' => $title,
             'prompt' => $prompt,
             'segments' => $prompt->ordered_segments,
+            'next' => $this->nextPromptOptions($pathId),
             'nav' => 'prompts'
         ]);
     }
+    public function nextPromptOptions($pathId)
+    {
+        $user = Auth::user();
+        $path = PromptPath::find($pathId);
 
+        $options = [
+            'stay' => 'stay here',
+            'prompts' => 'select a prompt',
+            'paths' => 'select a path',
+            'questions' => 'view knowledges and questions'
+        ];
+        $creator = $path->created_by;
+        if ($creator != null && $creator->id == $user->id) {
+            $options = [ 'editors' => 'manage path editors' ] + $options;
+        }
+        return $options;
+    }
 }

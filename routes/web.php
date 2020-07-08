@@ -17,6 +17,7 @@ use Psr\Http\Message\ServerRequestInterface;
 */
 Route::mixin(new \Laravel\Ui\AuthRouteMethods());
 Route::auth(['verify' => true]);
+Route::any('logout', 'Auth\LoginController@logout');
 
 Route::get('/', function () {
     return redirect()->action('Curriculum\PathsController@getPaths');
@@ -68,9 +69,6 @@ Route::prefix('curriculum')->group(function(){
     Route::post('options/delete/{questionId}/{optionId}', 'Curriculum\SamplingOptionsController@deleteSamplingOption');
     Route::post('options/all/{questionId}', 'Curriculum\SamplingOptionsController@allSamplingOptions');
 // Users
-    Route::get('editors', function () {
-        return redirect()->action('Curriculum\PathsController@missingPath', [ 'type' => 'editors' ]);
-    });
     Route::get('editors/{pathId}', 'Curriculum\EditorsController@getEditors');
     Route::post('editors/{pathId}', 'Curriculum\EditorsController@postEditors');
     Route::get('invite/{pathId}', 'Curriculum\EditorsController@getInvite');

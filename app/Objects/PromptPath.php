@@ -7,6 +7,7 @@ use App\Traits\PathTrait;
 use App\Traits\EditableTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 
 class PromptPath extends Model
 {
@@ -15,7 +16,7 @@ class PromptPath extends Model
     use KnowledgableTrait;
     use SoftDeletes;
 
-    protected $fillable = [ 'state', 'path_level', 'path_category', 'path_title', 'steps','repeatable', 'path_thesis', 'created_by' ];
+    protected $fillable = [ 'state', 'path_level', 'path_category', 'path_title', 'steps','repeatable', 'path_thesis', 'created_by_id' ];
     //
     protected $attributes = [
         'state' => 'review',
@@ -57,6 +58,64 @@ class PromptPath extends Model
     public function travels()
     {
         return $this->hasMany('App\Objects\Travel');
+    }
+
+    public function updateEditors($readerIds, $editorIds)
+    {
+        $creator = $this->created_by;
+        $created_by_id = $creator->id;
+        $all = $this->editors;
+        foreach ($all as $editor) {
+            Log::debug("updateEditors: ".$editor->name);
+            if ($created_by_id == $editor->id) {
+                continue;
+            }
+            if (!in_array($editor->id, $readerIds) &&
+                !in_array($editor->id, $editorIds)) {
+                Log::debug("no access: ".$editor->name);
+                $this->editors()->detach($editor);
+                $editor->save();
+                $this->save();
+                continue;
+            }
+            if (in_array($editor->id, $readerIds)) {
+                Log::debug("read access: ".$editor->name);
+                $editor->pivot->write_access = false;
+                $editor->pivot->save();
+                $editor->save();
+                $this->save();
+                unset($readerIds[array_search($editor->id, $readerIds)]);
+                continue;
+            }
+            Log::debug("write access: ".$editor->name);
+            $editor->pivot->write_access = true;
+            $editor->pivot->save();
+            $editor->save();
+            $this->save();
+            unset($editorIds[array_search($editor->id, $editorIds)]);
+            continue;
+        }
+        if (!empty($readerIds)) {
+            foreach ($readerIds as $id) {
+                Log::debug("updateEditors: ".$editor->name);
+                $editor = User::find($id);
+                $this->editors()->attach($editor);
+                $editor->pivot->write_access = false;
+                $editor->pivot->save();
+                $editor->save();
+            }
+        }
+        if (!empty($editorIds)) {
+            foreach ($editorIds as $id) {
+                $editor = User::find($id);
+                $this->editors()->attach($editor);
+                $editor->pivot->write_access = true;
+                $editor->pivot->save();
+                $editor->save();
+            }
+        }
+        $this->save();
+        return;
     }
 
     public function getKnowledgeNames()
@@ -105,5 +164,30 @@ class PromptPath extends Model
             $steps[1] = "1 (First prompt)";
         }
         return $steps;
+    }
+
+    public function getActiveEditors($includeAll = false)
+    {
+        $editors = $this->editors()->select(['users.id', 'users.name'])->where('users.name', '!=', null)->get();
+        $active = [];
+        foreach ($editors as $editor) {
+            $selected = $editor->pivot->write_access ? 'write' : 'read';
+            if (array_key_exists($editor->id, $active)) {
+                $this->editors()->detach($editor);
+                $this->save();
+            }
+            $active[$editor->id] = [ 'name' => $editor->name, 'selected' => $selected ];
+        }
+        if (!$includeAll) {
+            return $active;
+        }
+        $all = User::select([ 'id', 'name' ])->where('name', '!=', null)->get();
+        $options = [];
+        foreach ($all as $each) {
+            if (!array_key_exists($each->id, $active)) {
+                $options[$each->id] = [ 'name' => $each->name, 'selected' => 'none' ];
+            }
+        }
+        return $active + $options;
     }
 }

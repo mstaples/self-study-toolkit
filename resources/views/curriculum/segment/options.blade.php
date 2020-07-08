@@ -45,11 +45,8 @@
             </button>
 
             <button type="button" class="btn btn-danger btn-secondary"
-                    onclick="deleteContent(
-                        '{{ url('curriculum/segments/delete/'.$segment->id) }}',
-                        '{{ $segment->segment_title }}',
-                        'segment-all'
-                        )">
+                    onclick="deleteContent('{{ url('curriculum/segments/delete/'.$segment->id) }}',
+                        'all-segments')">
                 <i class="fas fa-ban"></i>
                 Delete
             </button>

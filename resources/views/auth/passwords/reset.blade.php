@@ -1,4 +1,13 @@
-@extends('layouts.app')
+@extends('layouts.empty')
+
+@section('title', __('Reset Password') )
+
+@section('navbar')
+    <!-- Nav -->
+    <nav id="nav">
+        @include('component.navbar')
+    </nav>
+@endsection
 
 @section('content')
 <div class="container">
