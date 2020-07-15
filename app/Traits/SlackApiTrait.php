@@ -178,6 +178,9 @@ trait SlackApiTrait
                 if ($prompt == 'path') {
                     return $this->nextPath($operator);
                 }
+                if ($prompt == 'rest') {
+                    return $this->createRestView($operator);
+                }
                 $travel = $operator->getCurrentTravel();
                 $travel->current_prompt()->dissociate();
                 $travel->current_prompt()->associate($prompt);
@@ -258,6 +261,10 @@ trait SlackApiTrait
             return $this->nextSegment($operator);
         }
         $pathOptions = $operator->pathOptions();
+        if (empty($pathOptions)) {
+            Log::debug("No available paths found");
+            return $this->topicPreferences($operator);
+        }
         $user_id = $operator->slack_user_id;
         $title = "Learning paths";
         $description = "Select one of the available paths for your next learning journey or adjust your preferences.";
