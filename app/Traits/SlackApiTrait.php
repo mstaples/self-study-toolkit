@@ -402,13 +402,13 @@ trait SlackApiTrait
         if (empty($travel)) {
             return $this->nextPath($operator);
         }
-        $last = $travel->responses()->orderBy('updated_at', 'desc')->first();
-        if (empty($last)) {
+        if (($travel->completed_prompts == 0 && $travel->completed_segments == 0) ||
+            $travel->readyForNextPrompt()) {
             return $this->nextSegment($operator);
         }
-        $segment = PromptSegment::find($last->question_id);
-        $prompt = $segment->prompt;
-        $path = $prompt->prompt_path;
+        $path = $travel->prompt_path;
+        $next = $travel->prompts_completed + 1;
+        $prompt = $path->prompts()->where('prompt_path_step', $next);
         $title = $prompt->prompt_title;
         $block_id = "path.replay";
         $message = "You can replay your last prompt, $title, if you would like to review it.";
