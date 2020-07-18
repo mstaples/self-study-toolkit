@@ -132,6 +132,11 @@ class SlackAction extends Model
             return $answer->answerQuestion($this->getBlockType(), $answer, $this->value);
         }
         switch($contentType) {
+            case 'actions':
+                $selection = explode('.', $this->value);
+                Log::debug($selection);
+                if ($selection[0] == 'goto') return $selection[1];
+                break;
             case 'demo':
                 return $this->block_id;
             case 'preferences':

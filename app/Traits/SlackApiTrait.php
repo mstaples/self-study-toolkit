@@ -6,9 +6,11 @@ use App\Objects\Operator;
 use App\Objects\Prompt;
 use App\Objects\PromptPath;
 use App\Objects\PromptSegment;
+use App\Objects\PromptSegmentResponse;
 use App\Objects\SamplingAnswer;
 use App\Objects\SamplingQuestion;
 use App\Objects\SlackAction;
+use App\Objects\Travel;
 use App\Objects\User;
 use Illuminate\Support\Facades\Log;
 
@@ -101,7 +103,22 @@ trait SlackApiTrait
         return $this->promptDemoStep($operator, $prompt_id, 1);
     }
 
-    public function promptDemoStep($operator, $promptId, $step)
+    public function initiateReplay(Operator $operator)
+    {
+        $last = $operator->travels()->where('completed', true)->orderByDesc('completed_at')->first();
+        if (empty($last)) return false;
+        $path = $last->prompt_path;
+
+        $travel = new Travel();
+        $travel->level = $path->path_level;
+        $operator->travels()->save($travel);
+        $path->travels()->save($travel);
+        $travel->save();
+
+        return true;
+    }
+
+    public function promptDemoStep(Operator $operator, $promptId, $step)
     {
         $this->setDefaultHomeTab();
         $view = $this->defaultView;
@@ -193,6 +210,24 @@ trait SlackApiTrait
                 return $this->createRestView($operator);
             case 'preferences':
                 return $this->createPreferencesView($operator);
+            case 'replay':
+                $possible = $this->initiateReplay($operator);
+                if ($possible) return $this->nextSegment($operator);
+                return $this->nextSegment($operator);
+            case 'pause':
+                return $this->createPauseView($operator);
+                break;
+            case 'back':
+                $travel = $operator->getCurrentTravel();
+                if (empty($travel)) return $this->createRestView();
+                $segment = $travel->getLastSegment();
+                if (empty($segment)) {
+                    $path = $travel->prompt_path;
+                    $prompt = $path->prompts()->where('prompt_path_step', 1)->first();
+                    $step = $travel->completed_segments > 0 ? $travel->completed_segments : 1;
+                    $segment = $prompt->prompt_segments()->where('prompt_segment_order', $step)->first();
+                }
+                return $this->createSegmentView($operator, $segment);
             case 'wait':
                 return [];
             default:
@@ -248,7 +283,7 @@ trait SlackApiTrait
         $preferences = $operator->preferences()->where('type', 'topics')->get();
         if (empty($preferences)) {
             Log::debug("No preferences found");
-            return $this->topicPreferences($operator);
+            return $this->createPreferencesView($operator);
         }
         if ($operator->needsAQuestion() == 'question') {
             $question = $operator->pickSamplingQuestion();
@@ -263,28 +298,12 @@ trait SlackApiTrait
         $pathOptions = $operator->pathOptions();
         if (empty($pathOptions)) {
             Log::debug("No available paths found");
-            return $this->topicPreferences($operator);
+            return $this->createPreferencesView($operator);
         }
         $user_id = $operator->slack_user_id;
         $title = "Learning paths";
         $description = "Select one of the available paths for your next learning journey or adjust your preferences.";
         return $this->createPathMenuView($user_id, $title, $description, $pathOptions);
-    }
-
-    protected function topicPreferences(Operator $operator, $block = false)
-    {
-        Log::debug(__METHOD__);
-        $topics = $operator->getTopicPreferences();
-        $user_id = $operator->slack_user_id;
-        $block_id = "preferences.topics";
-        $title = "Focus Area";
-        $description = "Select topics you're interested in focusing on to help surface relevant questions and paths.";
-        $label = "Available options:";
-        if ($block) {//$block_id, $label, $options, $selected = []
-            $selected = $operator->getPreferredTopics();
-            return $this->createCheckboxesBlock($block_id, $label, $topics, $selected);
-        }
-        return $this->createCheckboxesView($user_id, $block_id, $title, $description, $label, $topics);
     }
 
     public function retrieveOperator($user)
@@ -299,6 +318,28 @@ trait SlackApiTrait
         }
         //Log::debug($operator);
         return $operator;
+    }
+
+    public function formatSlackOptions($availableOptions, $shuffle = true)
+    {
+        $options = [];
+        $selected = [];
+        foreach ($availableOptions as $id => $option) {
+            $options[$id] = $option['option'];
+            if (array_key_exists('has', $option) && $option['has']) {
+                $selected[$id] = $option['option'];
+            }
+        }
+        if ($shuffle) {
+            $ids = array_keys($options);
+            shuffle($ids);
+            $random = [];
+            foreach ($ids as $id) {
+                $random[$id] = $options[$id];
+            }
+            $options = $random;
+        }
+        return [ 'options' => $options, 'initial_options' => $selected ];
     }
 
     public function createSegmentView(Operator $operator, PromptSegment $segment, $demo = false)
@@ -325,32 +366,31 @@ trait SlackApiTrait
             $block_id = 'demo.' . $prompt->id . '.' . $segment->prompt_segment_order;
         }
         if (strlen($url) > 3) {
-            $description = $description .' ' . $url;
+            $description = $description .' (' . $url . ')';
         }
         Log::debug("createSegmentView block id = " . $block_id . " and demo == " . $demo);
 
         switch($type) {
             case 'button':
             case 'info':
-                $view['view']['blocks'][] = $this->createDescriptiveButtonBlock($block_id, $title, $description, 'next', 'next', $url);
-                return $view;
+                $view['view']['blocks'][] = $this->createDescriptiveButtonBlock($block_id, $title, $description, 'next', 'next');
                 break;
             case 'image':
                 $message = '*' . $title . "* \n " . $description;
                 $view['view']['blocks'][] = $this->createImageBlock($block_id, $image, $alt_text, $message);
                 $block_id = $block_id . '.next';
                 $view['view']['blocks'][] = $this->createButtonBlock($block_id, ' ', 'next', 'next');
-                return $view;
                 break;
             case 'checkboxes':
                 $answer = $segment->prepareNewQuestionAnswer($operator);
                 $block_id = $answer->getBlockId();
                 $label = "Select any answers you think make sense:";
                 $message = '*' . $title . "* \n " . $description;
+                $previous = $operator->getLastAnswer($segment);
+                $selected_options = empty($previous) ? [] : $previous->selected_options;
                 $view['view']['blocks'][] = $this->createMessageBlock($message);
-                $view['view']['blocks'][] = $this->createCheckboxesBlock($block_id, $label, $answer->available_options);
+                $view['view']['blocks'][] = $this->createCheckboxesBlock($block_id, $label, $answer->available_options, $selected_options);
                 $view['view']['blocks'][] = $this->createButtonBlock($block_id.'.save', 'Done with selection', 'save', 'save');
-                return $view;
                 break;
             case 'radio_buttons':
                 $answer = $segment->prepareNewQuestionAnswer($operator);
@@ -358,16 +398,30 @@ trait SlackApiTrait
                 $label = " ";
                 $message = '*' . $title . "* \n " . $description;
                 $view['view']['blocks'][] = $this->createMessageBlock($message);
-                $view['view']['blocks'][] = $this->createRadioButtonsBlock($block_id, $label, $answer->available_options);
-                return $view;
+                $view['view']['blocks'][] = $this->createRadioButtonsBlock($block_id, $label, $answer->getSegmentOptions());
+                $last = $operator->getLastAnswer($segment);
+                if ($last) {
+                    $view['view']['blocks'][] = $this->createButtonBlock($block_id.'.save', 'Done with selection', 'save', 'save');
+                }
+                break;
             default:
                 $message = "Segment \"$title\" provided unknown type: $type";
                 $segment->accessory_type = 'info';
                 $segment->save();
                 Log::debug($message);
-                return $this->createSegmentView($operator, $segment);
+                $view = $this->createSegmentView($operator, $segment);
                 break;
         }
+        $view['view']['blocks'][] = [ "type" => "divider" ];
+
+        $travel = $operator->getCurrentTravel();
+        if (empty($travel) || empty($travel->getLastSegment())) {
+            $view['view']['blocks'][] = $this->createFooterBlock([ "preferences", "pause" ]);
+        } else {
+            $view['view']['blocks'][] = $this->createFooterBlock([ "back", "preferences", "pause" ]);
+        }
+
+        return $view;
     }
 
     public function createMessageView($message)
@@ -391,12 +445,6 @@ trait SlackApiTrait
         $view = $this->defaultHome();
 
         $view['user_id'] = $operator->slack_user_id;
-        $view['view']['blocks'] = [];
-        $message = "*Process and reflect* \n _You've completed as many prompts as align with your goals for the moment._";
-        $view['view']['blocks'][] = $this->createMessageBlock($message);
-        $block_id = "preferences.review";
-        $message = "You can change the frequency at which you receive new prompts, or adjust other preferences.";
-        $view['view']['blocks'][] = $this->createButtonBlock($block_id, $message, "Preferences", 'review');
 
         $travel = $operator->getCurrentTravel();
         if (empty($travel)) {
@@ -406,13 +454,31 @@ trait SlackApiTrait
             $travel->readyForNextPrompt()) {
             return $this->nextSegment($operator);
         }
-        $path = $travel->prompt_path;
-        $next = $travel->prompts_completed + 1;
-        $prompt = $path->prompts()->where('prompt_path_step', $next);
-        $title = $prompt->prompt_title;
-        $block_id = "path.replay";
-        $message = "You can replay your last prompt, $title, if you would like to review it.";
-        $view['view']['blocks'][] = $this->createButtonBlock($block_id, $message, "Replay", $path->id);
+
+        $view['view']['blocks'] = [];
+        $message = "*Process and reflect* \n _You've completed as many prompts as align with your goals for the moment._";
+        $view['view']['blocks'][] = $this->createMessageBlock($message);
+        $view['view']['blocks'][] = $this->createFooterBlock(["preferences", "replay"]);
+
+        return $view;
+    }
+
+    public function createPauseView(Operator $operator)
+    {
+        $view = $this->defaultHome();
+
+        $view['user_id'] = $operator->slack_user_id;
+
+        $travel = $operator->getCurrentTravel();
+        if (empty($travel)) {
+            return $this->nextPath($operator);
+        }
+
+        $view['view']['blocks'] = [];
+        $message = "*Paused* \n _Restart your journey at any time._";
+        $view['view']['blocks'][] = $this->createMessageBlock($message);
+        $view['view']['blocks'][] = [ 'type' => 'divider' ];
+        $view['view']['blocks'][] = $this->createFooterBlock(["preferences", "back"]);
 
         return $view;
     }
@@ -425,20 +491,9 @@ trait SlackApiTrait
         $view['view']['blocks'] = [];
         $message = "*Preferences* \n ";
         $view['view']['blocks'][] = $this->createMessageBlock($message);
-        $view['view']['blocks'][] = $this->topicPreferences($operator, true);
-
-        $block_id = "preferences.frequency";
-        $frequencies = array_keys($operator->frequencies);
-        $current = $operator->preferences()->where('type', 'frequency')->first();
-        $selected = null;
-        if (!empty($current)) $selected = $current->name;
-        $options = [];
-        foreach ($frequencies as $option) {
-            $options[$option] = [ 'option' => $option ];
-            $options[$option]['has'] = $selected == $option;
-        }
-        $label = "New prompt frequency: ";
-        $view['view']['blocks'][] = $this->createRadioButtonsBlock($block_id, $label, $options);
+        $view['view']['blocks'][] = [ 'type' => 'divider' ];
+        $view['view']['blocks'][] = $this->createTopicPreferencesBlock($operator);
+        $view['view']['blocks'][] = $this->createPromptFrequencyPreferenceBlock($operator);
 
         $block_id = "preferences.done";
         $view['view']['blocks'][] = $this->createButtonBlock($block_id.'.save', 'Done with changes', 'save', 'save');
@@ -454,7 +509,7 @@ trait SlackApiTrait
         $view['user_id'] = $user_id;
         $view['view']['blocks'] = [];
         $view['view']['blocks'][] = $this->createMessageBlock($message);
-        $view['view']['blocks'][] = $this->createMessageBlock(" --- ");
+        $view['view']['blocks'][] = [ "type" => "divider" ];
 
         $label = 'Select';
         foreach ($options as $id => $info) {
@@ -465,13 +520,8 @@ trait SlackApiTrait
             $view['view']['blocks'][] = $block;
         }
 
-        $view['view']['blocks'][] = $this->createMessageBlock(" --- ");
-
-        $block_id = "preferences.review";
-        $title = "Review preferences";
-        $description = "You can change the frequency at which you receive new prompts, or adjust other preferences.";
-        $message = "*$title* \n _ $description _";
-        $view['view']['blocks'][] = $this->createButtonBlock($block_id, $message, "Preferences", 'review');
+        $view['view']['blocks'][] = [ "type" => "divider" ];
+        $view['view']['blocks'][] = $this->createFooterBlock([ "preferences" ]);
 
         return $view;
     }
@@ -484,29 +534,12 @@ trait SlackApiTrait
         $view['user_id'] = $user_id;
         $view['view']['blocks'] = [];
         $view['view']['blocks'][] = $this->createMessageBlock($message);
+        $view['view']['blocks'][] = [ 'type' => 'divider' ];
         $view['view']['blocks'][] = $this->createCheckboxesBlock($block_id, $label, $options);
+        $view['view']['blocks'][] = [ 'type' => 'divider' ];
         $view['view']['blocks'][] = $this->createButtonBlock($block_id.'.save', 'Done with selection', 'save', 'save');
 
         return $view;
-    }
-
-    public function formatSlackOptions($availableOptions)
-    {
-        $options = [];
-        $selected = [];
-        foreach ($availableOptions as $id => $option) {
-            $options[$id] = $option['option'];
-            if (array_key_exists('has', $option) && $option['has']) {
-                $selected[$id] = $option['option'];
-            }
-        }
-        $ids = array_keys($options);
-        shuffle($ids);
-        $random = [];
-        foreach ($ids as $id) {
-            $random[$id] = $options[$id];
-        }
-        return [ 'options' => $random, 'initial_options' => $selected ];
     }
 
     public function createSamplingQuestionView($answer, $user_id)
@@ -517,7 +550,40 @@ trait SlackApiTrait
         $block_id = $answer->getBlockId();
         $label = $answer->question_text;
 
-        return $this->createCheckboxesView($user_id, $block_id, $title, $description, $label, $answer->available_options);
+        $view = $this->createCheckboxesView($user_id, $block_id, $title, $description, $label, $answer->available_options);
+        $view['view']['blocks'][] = $this->createFooterBlock([ "preferences", "pause" ]);
+
+        return $view;
+    }
+
+    public function createFooterBlock($options = [])
+    {
+        Log::debug(__METHOD__);
+        $block = [
+            'type' => 'actions',
+            'block_id' => 'actions.footer.action',
+            'elements' => []
+            ];
+        $elements = [
+            "replay" => [ "value" => "goto.replay", "text" => "Replay" ],
+            "back" => [ "value" => "goto.back", "text" => "Back" ],
+            "preferences" => [ "value" => "goto.preferences", "text" => "Preferences" ],
+            "pause" => [ "value" => "goto.pause", "text" => "Pause" ],
+        ];
+        if (empty($options)) {
+            $options = [ "preferences" ];
+        }
+        foreach ($options as $option) {
+            $block['elements'][] = [
+                "type" => "button",
+                "value" => $elements[$option]['value'],
+                'text' => [
+                    'type' => 'plain_text',
+                    'text' => $elements[$option]['text'],
+                    'emoji' => true
+                ]];
+        }
+        return $block;
     }
 
     public function createRefreshHomeBlock()
@@ -543,6 +609,32 @@ trait SlackApiTrait
         return $block;
     }
 
+    public function createPromptFrequencyPreferenceBlock(Operator $operator)
+    {
+        $block_id = "preferences.frequency";
+        $frequencies = array_keys($operator->frequencies);
+        $current = $operator->preferences()->where('type', 'frequency')->first();
+        $selected = null;
+        if (!empty($current)) $selected = $current->name;
+        $options = [];
+        foreach ($frequencies as $option) {
+            $options[$option] = [ 'option' => $option ];
+            $options[$option]['has'] = $selected == $option;
+        }
+        $label = "New prompt frequency: ";
+        return $this->createRadioButtonsBlock($block_id, $label, $options, false);
+    }
+
+    public function createTopicPreferencesBlock(Operator $operator)
+    {
+        Log::debug(__METHOD__);
+        $topics = $operator->getTopicPreferences();
+        $block_id = "preferences.topics";
+        $label = "Available options:";
+        $selected = $operator->getPreferredTopics();
+        return $this->createCheckboxesBlock($block_id, $label, $topics, $selected, false);
+    }
+
     public function createPromptBlock(Prompt $prompt)
     {
         $path = $prompt->prompt_path;
@@ -551,12 +643,13 @@ trait SlackApiTrait
         return $this->createMessageBlock($title.$thesis);
     }
 
-    public function createRadioButtonsBlock($block_id, $label, $options)
+    public function createRadioButtonsBlock($block_id, $label, $options, $shuffle = true)
     {
         Log::debug(__METHOD__);
-        $slackOptions = $this->formatSlackOptions($options);
+        $slackOptions = $this->formatSlackOptions($options, $shuffle);
         $options = $slackOptions['options'];
         $selected = $slackOptions['initial_options'];
+
         $accessoryOptions = [];
         foreach ($options as $value => $option) {
             $accessoryOptions[] = [
@@ -621,10 +714,10 @@ trait SlackApiTrait
         ];
     }
 
-    public function createCheckboxesBlock($block_id, $label, $options, $selected = [])
+    public function createCheckboxesBlock($block_id, $label, $options, $shuffle = true)
     {
         Log::debug(__METHOD__);
-        $slackOptions = $this->formatSlackOptions($options);
+        $slackOptions = $this->formatSlackOptions($options, $shuffle);
         $options = $slackOptions['options'];
         $selected = $slackOptions['initial_options'];
         $accessoryOptions = $initialOptions = [];

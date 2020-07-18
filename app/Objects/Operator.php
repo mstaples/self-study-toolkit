@@ -52,6 +52,17 @@ class Operator extends Model
         return $this->hasMany('App\Objects\FeedbackRecord', 'author_id');
     }
 
+    public function getLastAnswer(PromptSegment $segment)
+    {
+        return PromptSegmentResponse::where([
+            'operator_id' => $this->id,
+            'question_id' => $segment->id
+        ])
+            ->whereNotNull('selected_options')
+            ->orderByDesc('updated_at')
+            ->first();
+    }
+
     public function startPromptDemo($prompt_id)
     {
         if (!$this->user) {

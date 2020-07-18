@@ -57,7 +57,7 @@ class SlackController extends Controller
                     $operator->opt_in = true;
                     $operator->save();
 
-                    $json = $this->topicPreferences($operator);
+                    $json = $this->createPreferencesView($operator);
                 } else {
                     Log::debug('SlackController:actions operator found, parse actions');
                     foreach ($actions as $action) {

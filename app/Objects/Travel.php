@@ -50,6 +50,17 @@ class Travel extends Model
         return $this->belongsToMany('App\Objects\Learnings');
     }
 
+    public function getLastSegment()
+    {
+        $last = $this->responses()
+            ->whereNotNull('selected_options')
+            ->orderByDesc('updated_at')
+            ->first();
+        if (empty($last)) return [];
+        $segment_id = $last->question_id;
+        return PromptSegment::find($segment_id);
+    }
+
     public function readyForNextPrompt()
     {
         $operator = $this->operator;
