@@ -4,7 +4,14 @@
 @section('title', $title)
 
 @section('content')
-    <h2>Paths</h2>
+    <h2>Paths
+        <a data-toggle="collapse" href="#path-info" role="button" aria-expanded="false" aria-controls="path-info"><i class="fas fa-info"></i></a>
+    </h2>
+    <div class="collapse" id="path-info">
+        <div class="card card-body">
+            @include('component.info.path')
+        </div>
+    </div>
     <p>After an initial assessment, learners are offered a menu of suggested learning paths to help them train specific skills and knowledges.</p>
     @if (session('message'))
         <div class="alert alert-info">

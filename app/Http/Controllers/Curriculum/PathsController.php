@@ -89,9 +89,26 @@ class PathsController extends AdminBaseController
     {
         $user = Auth::user();
         $paths = $user->getPaths();
+        if ($user->authored_paths->isEmpty()) return $this->getFirstPaths();
+        //Log::debug(dd($user->authored_paths));
         $paths['new'] = 'Create a new path';
 
         return $this->adminView('curriculum/path/index', [
+            'options' => $paths,
+            'title' => 'Learning Paths',
+            'nav' => 'paths'
+        ]);
+    }
+
+    public function getFirstPaths()
+    {
+        $user = Auth::user();
+        $paths = $user->getPaths();
+        if (!$user->authored_paths->isEmpty()) return $this->getPaths();
+        $paths['new'] = 'Create a new path';
+
+        return $this->adminView('curriculum/path/first', [
+            'name' => $user->name,
             'options' => $paths,
             'title' => 'Learning Paths',
             'nav' => 'paths'
