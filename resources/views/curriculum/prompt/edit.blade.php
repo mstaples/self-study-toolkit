@@ -20,7 +20,14 @@
         @endsection
 
         @section('content')
-            <h4>{{ Form::label('prompt_title', 'Prompt title*:') }}</h4>
+            <h4>{{ Form::label('prompt_title', 'Prompt title*:') }}
+                <a data-toggle="collapse" href="#prompt-info" role="button" aria-expanded="false" aria-controls="path-info"><i class="fas fa-info"></i></a>
+            </h4>
+            <div class="collapse" id="prompt-info">
+                <div class="card card-body">
+                    @include('component.info.prompt')
+                </div>
+            </div>
             <h2>{{ Form::text('prompt_title', $prompt->prompt_title) }}</h2>
             {{ Form::label('repeatable', 'Repeatable? ') }}
             {{ Form::checkbox('repeatable', 'true', $prompt->repeatable) }}<br/>

@@ -24,7 +24,14 @@
 @endsection
 
 @section('content')
-    <h1>Path: {{ $path->path_title }}</h1>
+    <h1>Path: {{ $path->path_title }}
+        <a data-toggle="collapse" href="#path-info" role="button" aria-expanded="false" aria-controls="path-info"><i class="fas fa-info"></i></a>
+    </h1>
+    <div class="collapse" id="path-info">
+        <div class="card card-body">
+            @include('component.info.path')
+        </div>
+    </div>
     <p>Thesis: <span class="font-italic">{{ $path->path_thesis }}</span></p>
     <hr/>
     @parent

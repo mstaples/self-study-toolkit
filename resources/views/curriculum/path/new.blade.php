@@ -27,7 +27,14 @@
 @endsection
 
 @section('content')
-            <h4>Paths</h4>
+            <h4>Paths
+                <a data-toggle="collapse" href="#path-info" role="button" aria-expanded="false" aria-controls="path-info"><i class="fas fa-info"></i></a>
+            </h4>
+            <div class="collapse" id="path-info">
+                <div class="card card-body">
+                    @include('component.info.path')
+                </div>
+            </div>
             <p>A Path title and thesis aim to clearly convey the core knowlege or skill the path will attempt to facilitate the learner in achieving.</p>
         {{ Form::label('path_title', 'Path title:') }}
         <h3>{{ Form::text('path_title') }}</h3><br/>

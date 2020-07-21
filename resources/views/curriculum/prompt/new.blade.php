@@ -9,8 +9,14 @@
         @section('sidebar')@endsection
 
         @section('content')
-            <h2>Prompts</h2>
-            <p>Each learning path is composed of individual prompts, with one being presented to the learner ever few days or weeks based on their preferences. One prompt may be made up of one more multiple descrete segments containing a single focus or interaction such as a link, image, thought exercise, or multiple choice question.</p>
+            <h2>Prompts
+                <a data-toggle="collapse" href="#prompt-info" role="button" aria-expanded="false" aria-controls="path-info"><i class="fas fa-info"></i></a>
+            </h2>
+            <div class="collapse" id="prompt-info">
+                <div class="card card-body">
+                    @include('component.info.prompt')
+                </div>
+            </div>
             <p><strong>Non-optional</strong> earlier prompts are assumed to be prerequisites of <strong>non-optional</strong> later prompts, with the exception of the last prompt which will always be presented as the last prompt regardless of what else a learner has seen on that path.</p>
             <p>Keep in mind that the number of prompts someone sees will depend on their preferences, so it's important to have repeatable prompts to facilitate learners wanting more frequent check-ins.</p>
             <hr/>
