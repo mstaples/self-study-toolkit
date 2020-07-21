@@ -11,6 +11,7 @@ class Operator extends Model
 {
     public $frequencies = [
             "constant" => [ 'monthly_prompt_target' => 30, 'optimal_days_between_prompts' => 0 ],
+            "1 per day" => [ 'monthly_prompt_target' => 30, 'optimal_days_between_prompts' => 1 ],
             "3 per week" => [ 'monthly_prompt_target' => 12, 'optimal_days_between_prompts' => 2 ],
             "2 per week" => [ 'monthly_prompt_target' => 8, 'optimal_days_between_prompts' => 3 ],
             "1 per week" => [ 'monthly_prompt_target' => 4, 'optimal_days_between_prompts' => 7 ],
@@ -142,6 +143,21 @@ class Operator extends Model
         return $topics;
     }
 
+    public function getLastCompletedPromptResponse()
+    {
+        Log::debug(__METHOD__);
+        $travel = $this->travels()->where('completed_prompts', '>=', 1)->orderByDesc('created_at')->first();
+        Log::debug($travel);
+        if (empty($travel)) return $travel;
+        Log::debug($travel->responses);
+        $response = PromptSegmentResponse::where('travel_id', $travel->id)
+            ->whereNotNull('selected_options')
+            ->orderByDesc('created_at')
+            ->first();
+        Log::debug($response);
+        return $response;
+    }
+
     public function pickTopic()
     {
         $topics = $this->getPreferredTopics();
@@ -163,6 +179,7 @@ class Operator extends Model
             Log::debug("Unknown question type supplied to Operator::findOrRetrieveAnswer - $question_type");
             return false;
         }
+        Log::debug(__METHOD__.': '.$question_type .': '.$answerId);
         // Answer records are created when the question is sent out
         switch($question_type)
         {
@@ -316,15 +333,13 @@ class Operator extends Model
         $lastPath = $this->travels()->where('completed', true)->orderByDesc('completed_at')->first();
         if (empty($lastPath)) { // new operator
             $lastQuestions = $this->answers()->orderByDesc('created_at')->get();
-            $count = 5;
         } else {
             $lastQuestions = $this->answers()
                 ->where('created_at', '>=', $lastPath->completed_at)
                 ->get();
-            $count = 3;
         }
         $questionCount = count($lastQuestions);
-        if ($questionCount >= $count) {
+        if ($questionCount >= 3) {
             return 'prompt';
         }
         return 'question';
@@ -350,6 +365,46 @@ class Operator extends Model
         }
         Log::debug($paths);
         return $paths;
+    }
+
+    public function isResting()
+    {
+        Log::debug(__METHOD__);
+        $prefer = $this->preferences()->where('type', 'frequency')->first();
+        if (!empty($prefer) && $prefer->name == 'constant') {
+            return false;
+        }
+        $lastQuestion = $this->answers()
+            ->where('selected_options', '!=', null)
+            ->orderByDesc('updated_at')
+            ->first();
+        if (empty($lastQuestion)) {
+            Log::debug(__METHOD__.": ".__LINE__);
+            return false;
+        }
+        Log::debug(__METHOD__.": ".__LINE__);
+        $travel = $this->getCurrentTravel();
+        if (empty($travel)) {
+            Log::debug(__METHOD__.": ".__LINE__);
+            $travel = $this->travels()
+                ->where('completed', true)
+                ->orderByDesc('completed_at')
+                ->first();
+        }
+        Log::debug(__METHOD__.": ".__LINE__);
+        if (empty($travel)) return false;
+        Log::debug(__METHOD__.": ".__LINE__);
+        return !$travel->readyForNextPrompt();
+    }
+
+    public function getLastTravel()
+    {
+        $current = $this->travels()->where('completed', true)->orderBy('created_at', 'desc')->first();
+        if (empty($current)) {
+            Log::debug(__METHOD__.": No last travel found");
+            return [];
+        }
+        return $current;
     }
 
     public function getCurrentTravel()
@@ -421,33 +476,6 @@ class Operator extends Model
         return "rest";
     }
 
-    public function isResting()
-    {
-        Log::debug(__METHOD__);
-        $prefer = $this->preferences()->where('type', 'frequency')->first();
-        if (!empty($prefer) && $prefer->name == 'constant') {
-            return false;
-        }
-        $lastTravel = $this->travels()
-            ->where('completed', true)
-            ->orderByDesc('completed_at')
-            ->first();
-        if (empty($lastTravel)) {
-            Log::debug(__METHOD__.": ".__LINE__);
-            return false;
-        }
-        $lastQuestion = $this->answers()
-            ->where('selected_options', '!=', null)
-            ->orderByDesc('updated_at')
-            ->first();
-        if ($lastTravel->completed_at->gt($lastQuestion->updated_at)) {
-            Log::debug(__METHOD__.": ".__LINE__);
-            return false;
-        }
-        Log::debug(__METHOD__.": ".__LINE__);
-        return !$lastTravel->readyForNextPrompt();
-    }
-
     public function getNextPrompt()
     {
         Log::debug(__METHOD__);
@@ -458,57 +486,7 @@ class Operator extends Model
         if (empty($travel)) {
             return 'path';
         }
-        $path = $travel->prompt_path;
-        $optimalPromptCount = $this->getOptimalPromptCount($path);
-        Log::debug("goal # of prompts: $optimalPromptCount; current #: ".$travel->completed_prompts);
-        $remainingPrompts = $optimalPromptCount - $travel->completed_prompts;
-        if ($remainingPrompts < 1) {
-            $travel->completed = true;
-            $travel->save();
-
-            return [];
-        }
-        $nextRequired = $path->ordered_prompts()
-            ->where([
-                [ 'optional', '=', false ],
-                [ 'prompt_path_step', '>', $travel->completed_prompts ]
-            ])
-            ->first();
-        $nextOptional = $path->ordered_prompts()
-            ->where([
-                [ 'optional', '=', true ],
-                [ 'prompt_path_step', '>', $travel->completed_prompts ]
-            ])
-            ->first();
-        Log::debug($nextOptional);
-        Log::debug($nextRequired);
-
-        if (empty($nextOptional) && empty($nextRequired)) {
-            return $path->prompts()
-                ->where([
-                    [ 'repeatable', '=', true ],
-                    [ 'prompt_path_step', '<', $travel->completed_prompts + 1 ]
-                ])
-                ->inRandomOrder()
-                ->first();
-        }
-        if (empty($nextOptional)) return $nextRequired;
-        if (empty($nextRequired)) return $nextOptional;
-        if ($nextOptional->prompt_path_step > $nextRequired->prompt_path_step ||
-            $nextRequired->prompt_path_step >= ($travel->completed_prompts + 1)) {
-            return $nextRequired;
-        }
-        if (($nextRequired->prompt_path_step - $nextOptional->prompt_path_step) == 1) {
-            return $nextOptional;
-        }
-        return $path->prompts()
-            ->where([
-                [ 'repeatable', '=', true ],
-                [ 'prompt_path_step', '>', $travel->completed_prompts ],
-                [ 'prompt_path_step', '<', $nextRequired->prompt_path_step ]
-            ])
-            ->inRandomOrder()
-            ->first();
+        return $travel->getNextPrompt();
     }
 
     public function getOptimalPromptCount(PromptPath $path)

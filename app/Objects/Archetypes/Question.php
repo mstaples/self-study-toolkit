@@ -44,10 +44,21 @@ class Question extends Model
             case 'SamplingQuestion':
                 $answer = new SamplingAnswer();
                 $answer->question_text = $this->question;
+                $operator->answers()->save($answer);
+                $operator->save();
                 break;
             case 'PromptSegment':
+                $prompt = $this->prompt;
                 $answer = new PromptSegmentResponse();
+                $answer->prompt_id = $prompt->id;
                 $answer->question_text = $this->segment_text;
+
+                $travel = $operator->getCurrentTravel();
+                Log::debug("Creating a new question and associating it with travel id ".$travel->id);
+                $answer->operator()->associate($operator);
+                $answer->travel()->associate($travel);
+                $answer->save();
+
                 break;
             default:
                 Log::debug("Unknown question object given to app/Objects/Question::prepareAnswer - $type");
@@ -77,15 +88,11 @@ class Question extends Model
         Log::debug($options);
         $answer->question_id = $this->id;
         $answer->available_options = $options;
-        if ($type == 'PromptSegment') {
-            $travel = $operator->travels()->where('completed', false)->first();
-            $answer->travel()->associate($travel);
-        }
-        $answer->operator()->associate($operator);
         $answer->save();
-        $travel = $operator->getCurrentTravel();
+
         if ($type == 'SamplingQuestion' || $type == 'PromptSegment') {
             $knowledges = $this->getKnowledges();
+            $travel = $operator->getCurrentTravel();
             foreach ($knowledges as $knowledge) {
                 $learning = $operator->learnings()->where('knowledge_id', $knowledge->id)->first();
                 if (empty($learning)) {

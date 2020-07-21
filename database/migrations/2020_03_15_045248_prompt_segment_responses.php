@@ -17,6 +17,7 @@ class PromptSegmentResponses extends Migration
             Schema::create('prompt_segment_responses', function (Blueprint $table) {
                 $table->increments('id');
                 $table->unsignedInteger('operator_id');
+                $table->unsignedInteger('prompt_id')->nullable();
                 $table->unsignedInteger('question_id')->nullable();
                 $table->unsignedInteger('travel_id');
                 $table->string('question_text');

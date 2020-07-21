@@ -11,10 +11,12 @@ class PromptSegmentResponse extends Answer
     protected $fillable = [
         'travel_id',
         'operator_id',
+        'prompt_id',
         'question_id',
         'question_text',
         'freeform_answer',
         'selected_options',
+        'available_options',
         'eval_percent',
     ];
 

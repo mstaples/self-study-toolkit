@@ -114,6 +114,7 @@ class Answer extends Model
         if ($type == 'PromptSegmentResponse') {
             $operator = $this->operator;
             $travel = $operator->getCurrentTravel();
+            if (empty($travel)) return $operator->needsAQuestion();
             $travel->completed_segments += 1;
             $travel->save();
 

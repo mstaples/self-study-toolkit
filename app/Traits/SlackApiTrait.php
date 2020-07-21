@@ -72,6 +72,16 @@ trait SlackApiTrait
         return $this->defaultView;
     }
 
+    public function defaultUserView($user_id)
+    {
+        $this->setDefaultHomeTab();
+        $view = $this->defaultView;
+        $view['user_id'] = $user_id;
+        $view['view']['blocks'] = [];
+
+        return $view;
+    }
+
     public function initiatePathDemo($json)
     {
         $path_id = $json['path_id'];
@@ -89,7 +99,7 @@ trait SlackApiTrait
                 'description' => $path->path_thesis
             ];
         }
-        $title = "Learning paths";
+        $title = "Choose your next learning journey!";
         $description = "Select one of the available paths for your next learning journey or adjust your preferences.";
         return $this->createPathMenuView($slack_user_id, $title, $description, $pathOptions);
     }
@@ -103,7 +113,7 @@ trait SlackApiTrait
         return $this->promptDemoStep($operator, $prompt_id, 1);
     }
 
-    public function initiateReplay(Operator $operator)
+    public function initiateReview(Operator $operator)
     {
         $last = $operator->travels()->where('completed', true)->orderByDesc('completed_at')->first();
         if (empty($last)) return false;
@@ -210,23 +220,22 @@ trait SlackApiTrait
                 return $this->createRestView($operator);
             case 'preferences':
                 return $this->createPreferencesView($operator);
-            case 'replay':
-                $possible = $this->initiateReplay($operator);
-                if ($possible) return $this->nextSegment($operator);
-                return $this->nextSegment($operator);
+            case 'review':
+                if ($slackAction->getContentId() == 'path') {
+                    return $this->createReviewPathView($operator, $slackAction->value);
+                }
+                if ($slackAction->getContentId() == 'prompt') {
+                    return $this->createReviewPromptView($operator, $slackAction->value);
+                }
+                return $this->createReviewAllView($operator);
             case 'pause':
                 return $this->createPauseView($operator);
-                break;
             case 'back':
                 $travel = $operator->getCurrentTravel();
-                if (empty($travel)) return $this->createRestView();
-                $segment = $travel->getLastSegment();
-                if (empty($segment)) {
-                    $path = $travel->prompt_path;
-                    $prompt = $path->prompts()->where('prompt_path_step', 1)->first();
-                    $step = $travel->completed_segments > 0 ? $travel->completed_segments : 1;
-                    $segment = $prompt->prompt_segments()->where('prompt_segment_order', $step)->first();
+                if (empty($travel)) {
+                    return $this->createRestView($operator);
                 }
+                $segment = $travel->getNextSegment();
                 return $this->createSegmentView($operator, $segment);
             case 'wait':
                 return [];
@@ -245,8 +254,7 @@ trait SlackApiTrait
     {
         Log::debug(__METHOD__);
         $segment = $operator->getNextSegment();
-        Log::debug(__METHOD__);
-        Log::debug($segment);
+        //Log::debug($segment);
         if (is_object($segment)) {
             return $this->createSegmentView($operator, $segment);
         }
@@ -261,6 +269,7 @@ trait SlackApiTrait
                 $answer = $question->prepareNewQuestionAnswer($operator);
                 return $this->createSamplingQuestionView($answer, $user_id);
             case 'prompt':
+                Log::debug(__METHOD__.__LINE__.": unexpected segment value 'prompt'");
                 /*
                 $current = $operator->getCurrentTravel();
                 if (!empty($current) && !empty($current->current_travel)) {
@@ -273,6 +282,7 @@ trait SlackApiTrait
                     //return $this->createSegmentView($operator, $segment);
                 break;
             default:
+                Log::debug(__METHOD__.__LINE__.": unexpected segment value ".$segment);
                 break;
         }
     }
@@ -301,7 +311,7 @@ trait SlackApiTrait
             return $this->createPreferencesView($operator);
         }
         $user_id = $operator->slack_user_id;
-        $title = "Learning paths";
+        $title = "Choose your next learning journey!";
         $description = "Select one of the available paths for your next learning journey or adjust your preferences.";
         return $this->createPathMenuView($user_id, $title, $description, $pathOptions);
     }
@@ -377,7 +387,7 @@ trait SlackApiTrait
                 break;
             case 'image':
                 $message = '*' . $title . "* \n " . $description;
-                $view['view']['blocks'][] = $this->createImageBlock($block_id, $image, $alt_text, $message);
+                $view['view']['blocks'][] = $this->createSectionImageBlock($block_id, $image, $alt_text, $message);
                 $block_id = $block_id . '.next';
                 $view['view']['blocks'][] = $this->createButtonBlock($block_id, ' ', 'next', 'next');
                 break;
@@ -399,10 +409,6 @@ trait SlackApiTrait
                 $message = '*' . $title . "* \n " . $description;
                 $view['view']['blocks'][] = $this->createMessageBlock($message);
                 $view['view']['blocks'][] = $this->createRadioButtonsBlock($block_id, $label, $answer->getSegmentOptions());
-                $last = $operator->getLastAnswer($segment);
-                if ($last) {
-                    $view['view']['blocks'][] = $this->createButtonBlock($block_id.'.save', 'Done with selection', 'save', 'save');
-                }
                 break;
             default:
                 $message = "Segment \"$title\" provided unknown type: $type";
@@ -415,12 +421,191 @@ trait SlackApiTrait
         $view['view']['blocks'][] = [ "type" => "divider" ];
 
         $travel = $operator->getCurrentTravel();
-        if (empty($travel) || empty($travel->getLastSegment())) {
-            $view['view']['blocks'][] = $this->createFooterBlock([ "preferences", "pause" ]);
-        } else {
-            $view['view']['blocks'][] = $this->createFooterBlock([ "back", "preferences", "pause" ]);
+        $nav = [ "back", "preferences", "pause" ];
+        if (!empty($travel) && !empty($travel->getLastSegment())) {
+            $last = $travel->getLastSegment();
+            if ($last->id == $segment->id) {
+                $nav = [ "preferences", "pause" ];
+            }
+        }
+        if ($segment->prompt_segment_order == 1) {
+            $nav = [ "preferences", "pause" ];
+        }
+        $view['view']['blocks'][] = $this->createFooterBlock($nav);
+
+        return $view;
+    }
+
+    public function createReviewAllView(Operator $operator)
+    {
+        Log::debug(__METHOD__);
+        $travels = $operator->travels()
+            ->orderByDesc('completed_at')
+            ->get();
+        if (count($travels) < 1) {
+            Log::debug(__METHOD__.': '.__LINE__);
+            return $this->createPathMenuView();
+        }
+        Log::debug(count($travels));
+        Log::debug($travels);
+        Log::debug(__METHOD__.': '.__LINE__);
+        $view = $this->defaultUserView($operator->slack_user_id);
+        $message = "*Review Paths* \n ";
+        $view['view']['blocks'][] = $this->createMessageBlock($message);
+        $view['view']['blocks'][] = [ 'type' => 'divider' ];
+
+        $paths = [];
+        foreach ($travels as $travel) {
+            $path = $travel->prompt_path;
+            $paths[] = [ 'path' => $path, 'travel' => $travel ];
+        }
+        Log::debug(__METHOD__.': '.__LINE__);
+        if (count($paths) == 1) {
+            $path = $paths[0]['path'];
+            Log::debug(__METHOD__.': '.__LINE__);
+            return $this->createReviewPathView($operator, $path->id);
+        }
+        Log::debug(__METHOD__.': '.__LINE__);
+        $label = "Review";
+        foreach ($paths as $path) {
+            $block_id = "actions.review.path.".$path->id;
+            $title = $path['path']->path_title;
+            $view['view']['blocks'][] = $this->createDescriptiveButtonBlock(
+                $block_id,
+                $title,
+                $path['path']->path_thesis . ' Last completed ' . $path['travel']->completed_at->format('F d'),
+                $label,
+                $path->id
+            );
+            $view['view']['blocks'][] = [ 'type' => 'divider' ];
         }
 
+        $view['view']['blocks'][] = $this->createFooterBlock([ "preferences" ]);
+
+        return $view;
+    }
+
+    public function createReviewPathView(Operator $operator, $path_id)
+    {
+        $path = PromptPath::find($path_id);
+        Log::debug(__METHOD__.': path id '.$path_id);
+        if (empty($path)) {
+            Log::debug(__METHOD__ . ': ' . __LINE__);
+            return $this->createReviewAllView($operator);
+        }
+        $travels = $operator->travels()
+            ->where([ 'prompt_path_id' => $path_id ])
+            ->distinct('prompt_path_id')
+            ->orderByDesc('completed_at')
+            ->get();
+        if (empty($travels)) {
+            return $this->createReviewAllView();
+        }
+        $view = $this->defaultUserView($operator->slack_user_id);
+        $title = $path->path_title;
+        $description = $path->path_thesis;
+        $message = "*Review Path: $title* \n _ $description _";
+        $view['view']['blocks'][] = $this->createMessageBlock($message);
+        $view['view']['blocks'][] = [ 'type' => 'divider' ];
+
+        $prompts = [];
+        foreach ($travels as $travel) {
+            $responses = $travel->responses()->distinct('question_id')->get();
+            foreach ($responses as $response) {
+                $segment = PromptSegment::find($response->question_id);
+                $prompt = $segment->prompt;
+                if (!array_key_exists($prompt->id, $prompts)) {
+                    $prompts[$prompt->id] = [
+                        'prompt' => $prompt,
+                        'responses' => 1,
+                        'first' => $segment->updated_at,
+                        'last' => $segment->updated_at
+                    ];
+                    continue;
+                }
+                $prompts[$prompt->id]['responses']++;
+                if ($segment->updated_at < $prompts[$prompt->id]['first']) {
+                    $prompts[$prompt->id]['first'] = $segment->updated_at;
+                    continue;
+                }
+                if ($segment->updated_at > $prompts[$prompt->id]['last']) {
+                    $prompts[$prompt->id]['last'] = $segment->updated_at;
+                }
+            }
+        }
+
+        $label = "Review";
+        foreach ($prompts as $prompt) {
+            $description = 'Recorded responses: ' .
+                $prompt['responses'] .
+                ' between ' .
+                $prompt['first']->format('F d').
+                ' and ' .
+                $prompt['last']->format('F d');
+
+            $block_id = "actions.review.prompt.".$prompt['prompt']->id;
+            $title = $prompt['prompt']->prompt_title;
+
+            $view['view']['blocks'][] = $this->createDescriptiveButtonBlock($block_id, $title, $description,$label, $prompt['prompt']->id);
+
+            $view['view']['blocks'][] = [ 'type' => 'divider' ];
+        }
+
+        $view['view']['blocks'][] = $this->createFooterBlock([ "preferences" ]);
+
+        return $view;
+    }
+
+    public function createReviewPromptView(Operator $operator, $prompt_id)
+    {
+        $prompt = Prompt::find($prompt_id);
+        if (empty($prompt)) {
+            return $this->createReviewAllView($operator);
+        }
+        $responses = PromptSegmentResponse::where('prompt_id', $prompt_id)
+            ->whereNotNull('selected_options')
+            ->orderByDesc('completed_at')
+            ->get();
+        if (empty($responses)) {
+            $path = $prompt->prompt_path;
+            return $this->createReviewPathView($operator, $path->id);
+        }
+        $view = $this->defaultUserView($operator->slack_user_id);
+        $title = $prompt->prompt_title;
+        $message = "*Review Prompt: $title*";
+        $view['view']['blocks'][] = $this->createMessageBlock($message);
+        $view['view']['blocks'][] = [ 'type' => 'divider' ];
+
+        $segments = [];
+        foreach ($responses as $response) {
+            $segment = PromptSegment::find($response->question_id);
+            if (!array_key_exists($segment->id, $segments)) {
+                $segments[$segment->id] = [
+                    'segment' => $segment,
+                    'responses' => 1
+                ];
+                continue;
+            }
+            $segments[$segment->id]['responses']++;
+        }
+        foreach ($segments as $segment) {
+            $count = $segment['responses'];
+            $segment = $segment['segment'];
+            $question = $segment->segment_text;
+            $message = "*$question* ($count responses)";
+            $view['view']['blocks'][] = $this->createMessageBlock($message);
+
+            $responses = PromptSegmentResponse::where([
+                'prompt_id' => $prompt->id,
+                'operator_id' => $operator->id
+            ])->orderByDesc('updated_at')->get();
+            foreach ($responses as $response) {
+                $view['view']['blocks'][] = $this->createMessageBlock('---');
+                $view['view']['blocks'][] = $this->createReviewSegmentResponseBlock($response, $question);
+            }
+
+            $view['view']['blocks'][] = [ 'type' => 'divider' ];
+        }
         return $view;
     }
 
@@ -448,31 +633,51 @@ trait SlackApiTrait
 
         $travel = $operator->getCurrentTravel();
         if (empty($travel)) {
-            return $this->nextPath($operator);
+            $travel = $operator->getLastTravel();
+            if (empty($travel)) return $this->nextPath($operator);
         }
         if (($travel->completed_prompts == 0 && $travel->completed_segments == 0) ||
             $travel->readyForNextPrompt()) {
             return $this->nextSegment($operator);
         }
-
+        $options = [];
+        $options[] = [ 'name' => 'artist', 'alt' => 'gif - A femme figure holding out one hand and looking up as a series of artwork appears from her open hand and unfurls in front of her eye before flying off behind her.' ];
+        $options[] = [ 'name' => 'happy-bunnies', 'alt' => 'gif - Three cartoon bunnies jumping up and down and clapping their little paws - they are cheering for your success.' ];
+        $options[] = [ 'name' => 'infinite-rearview-mirror', 'alt' => 'gif - looking back through a rear view window at an infinite road lined with street lights stretching to the horizon and a setting sun.' ];
+        $options[] = [ 'name' => 'pixel-heart', 'alt' => 'gif - a red heart comprised of large square pixels bobs up and down and spins.' ];
+        $options[] = [ 'name' => 'pixel-tree', 'alt' => 'gif - a tree comprised of large square pixels blows in the wind, shedding leaves.' ];
+        $pick = rand(0, (count($options) - 1));
+        $url = asset('images/gifs/reflection/'. $options[$pick]['name'] .'.gif');
         $view['view']['blocks'] = [];
         $message = "*Process and reflect* \n _You've completed as many prompts as align with your goals for the moment._";
         $view['view']['blocks'][] = $this->createMessageBlock($message);
-        $view['view']['blocks'][] = $this->createFooterBlock(["preferences", "replay"]);
+        $view['view']['blocks'][] = $this->createImageBlock($url, $options[$pick]['alt']);
+        $view['view']['blocks'][] = $this->createFooterBlock(["preferences", "review"]);
 
         return $view;
+    }
+
+    public function createImageBlock($url, $alt, $text = null)
+    {
+        $block = [
+            "type"=> "image",
+			"image_url"=> "$url",
+			"alt_text"=> "$alt"
+		];
+        if ($text) {
+            $block['title'] = [
+                "type"=> "plain_text",
+                "text"=> "I Need a Marg",
+                "emoji"=> true
+            ];
+        }
+        return $block;
     }
 
     public function createPauseView(Operator $operator)
     {
         $view = $this->defaultHome();
-
         $view['user_id'] = $operator->slack_user_id;
-
-        $travel = $operator->getCurrentTravel();
-        if (empty($travel)) {
-            return $this->nextPath($operator);
-        }
 
         $view['view']['blocks'] = [];
         $message = "*Paused* \n _Restart your journey at any time._";
@@ -561,14 +766,14 @@ trait SlackApiTrait
         Log::debug(__METHOD__);
         $block = [
             'type' => 'actions',
-            'block_id' => 'actions.footer.action',
+            'block_id' => 'actions.goto',
             'elements' => []
             ];
         $elements = [
-            "replay" => [ "value" => "goto.replay", "text" => "Replay" ],
-            "back" => [ "value" => "goto.back", "text" => "Back" ],
-            "preferences" => [ "value" => "goto.preferences", "text" => "Preferences" ],
-            "pause" => [ "value" => "goto.pause", "text" => "Pause" ],
+            "review" => [ "value" => "review", "text" => "Review" ],
+            "back" => [ "value" => "back", "text" => "Back" ],
+            "preferences" => [ "value" => "preferences", "text" => "Preferences" ],
+            "pause" => [ "value" => "pause", "text" => "Pause" ],
         ];
         if (empty($options)) {
             $options = [ "preferences" ];
@@ -672,7 +877,7 @@ trait SlackApiTrait
                 "options" => $accessoryOptions
             ]
         ];
-        if (!empty($selected)) {
+        if (!empty($selected) && !$shuffle) {
             $value = array_key_first($selected);
             $text = array_shift($selected);
             $block['accessory']['initial_option'] = [
@@ -697,7 +902,7 @@ trait SlackApiTrait
         ];
     }
 
-    public function createImageBlock($blockId, $imageUrl, $altText, $message)
+    public function createSectionImageBlock($blockId, $imageUrl, $altText, $message)
     {
         return [
             "type" => "section",
@@ -754,7 +959,7 @@ trait SlackApiTrait
 
     public function createDescriptiveButtonBlock($block_id, $title, $description, $label, $value, $url = null)
     {
-        Log::debug(__METHOD__);
+        Log::debug(__METHOD__.": block id $block_id");
         if ($url != null) {
             $description .= " ($url)";
         }
@@ -771,7 +976,7 @@ trait SlackApiTrait
                 "value" => "$value",
                 'text' => [
                     'type' => 'plain_text',
-                    'text' => $label,
+                    'text' => "$label",
                     'emoji' => true
                 ]
             ]
@@ -802,41 +1007,25 @@ trait SlackApiTrait
         return $block;
     }
 
-    public function createDescriptiveChoiceBlock($block_id, $label, $options)
+    public function createReviewSegmentResponseBlock(PromptSegmentResponse $response, $question)
     {
         Log::debug(__METHOD__);
-        $accessoryOptions = [];
-        foreach ($options as $id => $info) {
-            $description = $info['description'];
-            if (strlen($description) > 149) {
-                $description = substr($description, 0, 145);
-                $description .= '...';
-            }
-            $accessoryOptions[] = [
-                'value' => "$id",
-                'text' => [
-                    "type" => "mrkdwn",
-                    "text" => '*' . $info['name'] . '*'
-                ],
-                'description' => [
-                    "type" => "mrkdwn",
-                    "text" => '_' . $description . '_'
-                ]
-            ];
+
+        $thenQuestion = $response->question_text;
+        $description = '';
+        if ($thenQuestion != $question) {
+            $description = "\"" . $thenQuestion . "\" [sic] \n";
         }
-        $block = [
-            'type' => 'section',
-            'block_id' => $block_id,
-            'text' => [
-                'type' => 'mrkdwn',
-                'text' => $label
-            ],
-            'accessory' => [
-                "type" => "radio_buttons",
-                "options" => $accessoryOptions
-            ]
-        ];
-        return $block;
+        foreach ($response->available_options as $id => $option) {
+            if (in_array($id, $response->selected_options)) {
+                $description = $description . "\n [ ] " . $option;
+                continue;
+            }
+            $description = $description . "\n [*] " . $option . " (selected)";
+        }
+        $description .= "\n Best guess evaluation at time of response: " . $response->eval_percent . "% \n";
+
+        return $this->createMessageBlock($description);
     }
 
     public function createSamplingBlock(SamplingAnswer $answer)

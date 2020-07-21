@@ -115,8 +115,8 @@ class SlackAction extends Model
             if ($answerId == 'next') {
                 $travel = $operator->getCurrentTravel();
                 if (empty($travel)) {
-                    Log::debug("takeAction answerId next but no current travel found. replay path");
-                    return 'replay';
+                    Log::debug("takeAction answerId next but no current travel found. review path");
+                    return 'review';
                 }
                 $travel->completed_segments += 1;
                 $travel->save();
@@ -133,17 +133,16 @@ class SlackAction extends Model
         }
         switch($contentType) {
             case 'actions':
-                $selection = explode('.', $this->value);
-                Log::debug($selection);
-                if ($selection[0] == 'goto') return $selection[1];
+                $actionType = $this->getContentId();
+                Log::debug("$actionType: $this->value");
+                if ($actionType == 'goto') return $this->value;
+                if ($actionType == 'review') return $actionType;
                 break;
             case 'demo':
                 return $this->block_id;
             case 'preferences':
                 $preferenceAction = $this->getContentId();
                 switch($preferenceAction) {
-                    case 'review':
-                        return "preferences";
                     case 'user':
                         Log::debug("Slack user attempting to connect curriculum editor account. ");
                         $connecting_user_id = $this->getAnswerId();
