@@ -30,7 +30,7 @@
 
 @section('content')
             <h3>Creating Paths
-                <a data-toggle="collapse" href="#path-info" role="button" aria-expanded="false" aria-controls="path-info"><i class="fas fa-info"></i></a>
+                <a data-toggle="collapse" href="#path-info" role="button" aria-expanded="false" aria-controls="path-info"><i class="fas fa-info-circle"></i></a>
             </h3>
             <div class="collapse" id="path-info">
                 <div class="card card-body">

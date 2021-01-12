@@ -33,7 +33,7 @@ sites:
 
 To test Slack API interactions which require the API to reach a callback, you will need to setup your own test Slack app.
 
-Go to the Slack app developer page and use the "Create New App" button.
+Go to the (Slack app developer page)[https://api.slack.com/apps] and use the "Create New App" button.
 
 ### App config - Basic Information
 

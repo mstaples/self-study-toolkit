@@ -1,5 +1,5 @@
 
-@extends('layouts.empty')
+@extends('layouts.first')
 
 @section('title', $title)
 
